@@ -7,6 +7,8 @@ import {
   type InsertEvent,
   type UpdateEvent,
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, like, asc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 // Interface for storage operations
@@ -15,6 +17,7 @@ export interface IStorage {
   // (IMPORTANT) these user operations are mandatory for Replit Auth.
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  getAllUsers(): Promise<User[]>;
   
   // Event operations
   getEvents(): Promise<Event[]>;
@@ -41,6 +44,10 @@ export class MemStorage implements IStorage {
     return this.users.get(id);
   }
 
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+
   async upsertUser(userData: UpsertUser): Promise<User> {
     const existingUser = this.users.get(userData.id!);
     
@@ -59,6 +66,7 @@ export class MemStorage implements IStorage {
         firstName: userData.firstName || null,
         lastName: userData.lastName || null,
         profileImageUrl: userData.profileImageUrl || null,
+        isAdmin: userData.isAdmin || false,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -95,7 +103,11 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const event: Event = {
       id,
-      ...eventData,
+      title: eventData.title,
+      description: eventData.description || null,
+      date: eventData.date,
+      time: eventData.time || null,
+      category: eventData.category,
       createdBy,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -124,4 +136,83 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  // User operations
+  // (IMPORTANT) these user operations are mandatory for Replit Auth.
+
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return user;
+  }
+
+  // Event operations
+  async getEvents(): Promise<Event[]> {
+    return await db.select().from(events).orderBy(asc(events.date), asc(events.time));
+  }
+
+  async getEventsByMonth(year: number, month: number): Promise<Event[]> {
+    const monthStr = month.toString().padStart(2, '0');
+    const yearStr = year.toString();
+    const datePattern = `${yearStr}-${monthStr}%`;
+    
+    return await db
+      .select()
+      .from(events)
+      .where(like(events.date, datePattern))
+      .orderBy(asc(events.date), asc(events.time));
+  }
+
+  async getEvent(id: string): Promise<Event | undefined> {
+    const [event] = await db.select().from(events).where(eq(events.id, id));
+    return event || undefined;
+  }
+
+  async createEvent(eventData: InsertEvent, createdBy: string): Promise<Event> {
+    const [event] = await db
+      .insert(events)
+      .values({
+        ...eventData,
+        createdBy,
+      })
+      .returning();
+    return event;
+  }
+
+  async updateEvent(id: string, eventData: UpdateEvent): Promise<Event | undefined> {
+    const [event] = await db
+      .update(events)
+      .set({
+        ...eventData,
+        updatedAt: new Date(),
+      })
+      .where(eq(events.id, id))
+      .returning();
+    return event || undefined;
+  }
+
+  async deleteEvent(id: string): Promise<boolean> {
+    const result = await db.delete(events).where(eq(events.id, id));
+    return result.rowCount > 0;
+  }
+}
+
+export const storage = new DatabaseStorage();

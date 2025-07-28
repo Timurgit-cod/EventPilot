@@ -17,7 +17,11 @@ const EVENT_COLORS = {
   deadline: { bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500' },
 };
 
-export default function Calendar() {
+interface CalendarProps {
+  isAdmin?: boolean;
+}
+
+export default function Calendar({ isAdmin = false }: CalendarProps) {
   const today = new Date();
   const [currentDate, setCurrentDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -96,12 +100,14 @@ export default function Calendar() {
   };
 
   const handleAddEvent = (date?: string) => {
+    if (!isAdmin) return;
     setSelectedDate(date || null);
     setEditingEvent(null);
     setIsModalOpen(true);
   };
 
   const handleEditEvent = (event: Event) => {
+    if (!isAdmin) return;
     setEditingEvent(event);
     setIsModalOpen(true);
   };
@@ -152,14 +158,16 @@ export default function Calendar() {
             >
               Сегодня
             </Button>
-            <Button
-              onClick={() => handleAddEvent()}
-              className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium shadow-sm"
-              data-testid="button-add-event"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Добавить событие
-            </Button>
+            {isAdmin && (
+              <Button
+                onClick={() => handleAddEvent()}
+                className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium shadow-sm"
+                data-testid="button-add-event"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Добавить событие
+              </Button>
+            )}
           </div>
         </div>
 
@@ -185,11 +193,12 @@ export default function Calendar() {
                 <div
                   key={index}
                   className={`
-                    bg-white min-h-[120px] p-3 relative transition-all cursor-pointer hover:bg-gray-50
+                    bg-white min-h-[120px] p-3 relative transition-all ${isAdmin ? 'cursor-pointer hover:bg-gray-50' : ''}
                     ${isCurrentDay ? 'bg-blue-50 border-2 border-blue-200' : ''}
                     ${selectedDate === dateStr ? 'ring-2 ring-blue-300' : ''}
                   `}
                   onClick={() => {
+                    if (!isAdmin) return;
                     setSelectedDate(dateStr);
                     if (dayEvents.length === 0) {
                       handleAddEvent(dateStr);
@@ -217,7 +226,7 @@ export default function Calendar() {
                       return (
                         <div
                           key={event.id}
-                          className={`flex items-center text-xs px-2 py-1 rounded cursor-pointer ${colors.bg} ${colors.text}`}
+                          className={`flex items-center text-xs px-2 py-1 rounded ${isAdmin ? 'cursor-pointer' : ''} ${colors.bg} ${colors.text}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleEditEvent(event);
@@ -242,12 +251,14 @@ export default function Calendar() {
         </div>
       </div>
 
-      <EventModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        event={editingEvent}
-        selectedDate={selectedDate}
-      />
+      {isAdmin && (
+        <EventModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          event={editingEvent}
+          selectedDate={selectedDate}
+        />
+      )}
     </>
   );
 }

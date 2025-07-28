@@ -2,11 +2,13 @@
 
 ## Overview
 
-This is a full-stack event calendar application built with React, Express, TypeScript, and PostgreSQL. The application provides an administrative interface for managing calendar events with authentication via Replit Auth. The system uses a modern tech stack with shadcn/ui components for the frontend and Drizzle ORM for database management.
+This is a full-stack event calendar application built with React, Express, TypeScript, and PostgreSQL. The application provides a role-based calendar system where all authenticated users can view events, but only administrators can create, edit, and delete events. The first registered user automatically becomes an administrator. The interface is in Russian and uses authentication via Replit Auth with a modern tech stack including shadcn/ui components and Drizzle ORM.
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Interface language: Russian
+Access control: Role-based system where first user becomes admin, others are read-only viewers
 
 ## System Architecture
 
@@ -36,21 +38,24 @@ Preferred communication style: Simple, everyday language.
 ## Key Components
 
 ### Database Schema
-- **Users Table**: Stores user information (required for Replit Auth)
+- **Users Table**: Stores user information with isAdmin flag (required for Replit Auth)
 - **Events Table**: Stores calendar events with relationships to users
 - **Sessions Table**: Manages user sessions (required for Replit Auth)
 
 ### Authentication System
 - Replit Auth integration with OpenID Connect
 - Session-based authentication with PostgreSQL storage
-- Protected routes requiring authentication
+- Role-based access control (admin vs regular users)
+- First registered user automatically becomes admin
 - User profile management
 
 ### Event Management
-- CRUD operations for calendar events
+- CRUD operations for calendar events (admin only)
+- Event viewing for all authenticated users
 - Event categorization (meetings, projects, deadlines)
 - Monthly event filtering
 - Real-time updates via React Query
+- Admin-only creation, editing, and deletion via protected API endpoints
 
 ### UI Components
 - Calendar grid view with month navigation

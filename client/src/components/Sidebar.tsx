@@ -1,195 +1,166 @@
 import { useQuery } from "@tanstack/react-query";
-import { Edit } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Calendar, Clock, Users, TrendingUp } from "lucide-react";
 import type { Event } from "@shared/schema";
-import { useState } from "react";
-import EventModal from "./EventModal";
 
-const EVENT_COLORS = {
-  meeting: { bg: 'bg-green-50', text: 'text-green-600', dot: 'bg-green-500' },
-  project: { bg: 'bg-blue-50', text: 'text-blue-600', dot: 'bg-blue-500' },
-  deadline: { bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500' },
-};
+interface SidebarProps {
+  isAdmin: boolean;
+}
 
-const CATEGORY_NAMES = {
-  meeting: 'Встречи',
-  project: 'Проекты',
-  deadline: 'Дедлайны',
-};
-
-export default function Sidebar() {
-  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const { data: events = [] } = useQuery<Event[]>({
-    queryKey: ['/api/events'],
+export default function Sidebar({ isAdmin }: SidebarProps) {
+  const { data: events = [], isLoading } = useQuery<Event[]>({
+    queryKey: ["/api/events"],
   });
 
-  const today = new Date();
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
+  const getUpcomingEvents = () => {
+    const today = new Date().toISOString().split('T')[0];
+    return events
+      .filter(event => event.date >= today)
+      .slice(0, 5);
+  };
 
-  // Filter events for current month
-  const currentMonthEvents = events.filter(event => {
-    const eventDate = new Date(event.date);
-    return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear;
-  });
-
-  // Filter upcoming events (today and future)
-  const todayStr = today.toISOString().split('T')[0];
-  const upcomingEvents = events
-    .filter(event => event.date >= todayStr)
-    .sort((a, b) => {
-      const dateCompare = a.date.localeCompare(b.date);
-      if (dateCompare !== 0) return dateCompare;
-      return (a.time || '00:00').localeCompare(b.time || '00:00');
-    })
-    .slice(0, 5);
-
-  // Calculate category statistics
-  const categoryStats = events.reduce((acc, event) => {
-    acc[event.category] = (acc[event.category] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const formatEventDateTime = (event: Event) => {
-    const date = new Date(event.date);
-    const monthNames = [
-      'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
-    ];
+  const getEventStats = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const thisMonth = new Date().toISOString().slice(0, 7);
     
-    const day = date.getDate();
-    const month = monthNames[date.getMonth()];
-    const time = event.time ? `, ${event.time}` : '';
-    
-    return `${day} ${month}${time}`;
+    return {
+      total: events.length,
+      thisMonth: events.filter(event => event.date.startsWith(thisMonth)).length,
+      upcoming: events.filter(event => event.date >= today).length,
+      meetings: events.filter(event => event.category === 'meeting').length,
+    };
   };
 
-  const handleEditEvent = (event: Event) => {
-    setEditingEvent(event);
-    setIsModalOpen(true);
-  };
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+            <div className="space-y-2">
+              <div className="h-3 bg-gray-200 rounded"></div>
+              <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingEvent(null);
-  };
+  const stats = getEventStats();
+  const upcomingEvents = getUpcomingEvents();
 
   return (
-    <>
-      <div className="space-y-6">
-        {/* Quick Stats */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Статистика</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      {/* Statistics */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
+          Статистика
+        </h3>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Calendar className="w-4 h-4 text-gray-500 mr-2" />
               <span className="text-sm text-gray-600">Всего событий</span>
-              <span className="text-lg font-semibold text-gray-900" data-testid="text-total-events">
-                {events.length}
-              </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Этот месяц</span>
-              <span className="text-lg font-semibold text-blue-600" data-testid="text-month-events">
-                {currentMonthEvents.length}
-              </span>
+            <span className="font-semibold text-gray-900" data-testid="text-total-events">
+              {stats.total}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Clock className="w-4 h-4 text-gray-500 mr-2" />
+              <span className="text-sm text-gray-600">В этом месяце</span>
             </div>
-            <div className="flex items-center justify-between">
+            <span className="font-semibold text-gray-900" data-testid="text-month-events">
+              {stats.thisMonth}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Users className="w-4 h-4 text-gray-500 mr-2" />
               <span className="text-sm text-gray-600">Предстоящие</span>
-              <span className="text-lg font-semibold text-green-600" data-testid="text-upcoming-events">
-                {upcomingEvents.length}
-              </span>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Upcoming Events */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <CardTitle className="text-lg">Предстоящие события</CardTitle>
-            <Button
-              variant="link"
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium p-0 h-auto"
-              data-testid="button-view-all-events"
-            >
-              Все события
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {upcomingEvents.length === 0 ? (
-              <div className="text-sm text-gray-500 text-center py-4" data-testid="text-no-upcoming-events">
-                Нет предстоящих событий
-              </div>
-            ) : (
-              upcomingEvents.map(event => {
-                const colors = EVENT_COLORS[event.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.project;
-                return (
-                  <div
-                    key={event.id}
-                    className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                    data-testid={`upcoming-event-${event.id}`}
-                  >
-                    <div className="flex-shrink-0 pt-1">
-                      <span className={`w-2 h-2 rounded-full inline-block ${colors.dot}`}></span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate" data-testid={`event-title-${event.id}`}>
-                        {event.title}
-                      </p>
-                      <p className="text-sm text-gray-500" data-testid={`event-datetime-${event.id}`}>
-                        {formatEventDateTime(event)}
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditEvent(event)}
-                      className="text-gray-400 hover:text-gray-600 p-1 h-auto"
-                      data-testid={`button-edit-event-${event.id}`}
-                    >
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                  </div>
-                );
-              })
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Event Categories */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Категории</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {Object.entries(CATEGORY_NAMES).map(([category, name]) => {
-              const count = categoryStats[category] || 0;
-              const colors = EVENT_COLORS[category as keyof typeof EVENT_COLORS];
-              return (
-                <div key={category} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span className={`w-2 h-2 rounded-full ${colors.dot}`}></span>
-                    <span className="text-sm text-gray-700">{name}</span>
-                  </div>
-                  <span className="text-sm text-gray-500" data-testid={`category-count-${category}`}>
-                    {count}
-                  </span>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+            <span className="font-semibold text-gray-900" data-testid="text-upcoming-events">
+              {stats.upcoming}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Users className="w-4 h-4 text-gray-500 mr-2" />
+              <span className="text-sm text-gray-600">Встречи</span>
+            </div>
+            <span className="font-semibold text-gray-900" data-testid="text-meeting-events">
+              {stats.meetings}
+            </span>
+          </div>
+        </div>
       </div>
 
-      <EventModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        event={editingEvent}
-      />
-    </>
+      {/* Upcoming Events */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <Clock className="w-5 h-5 mr-2 text-blue-600" />
+          Предстоящие события
+        </h3>
+        {upcomingEvents.length === 0 ? (
+          <p className="text-gray-500 text-sm" data-testid="text-no-upcoming">
+            Нет предстоящих событий
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {upcomingEvents.map((event) => (
+              <div 
+                key={event.id} 
+                className="border-l-4 border-blue-500 pl-3 py-2"
+                data-testid={`event-upcoming-${event.id}`}
+              >
+                <h4 className="font-medium text-gray-900 text-sm" data-testid={`text-event-title-${event.id}`}>
+                  {event.title}
+                </h4>
+                <p className="text-xs text-gray-500 mt-1" data-testid={`text-event-date-${event.id}`}>
+                  {new Date(event.date).toLocaleDateString('ru-RU')} 
+                  {event.time && ` в ${event.time}`}
+                </p>
+                {event.category && (
+                  <span 
+                    className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-2 ${
+                      event.category === 'meeting' 
+                        ? 'bg-blue-100 text-blue-800'
+                        : event.category === 'project'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}
+                    data-testid={`tag-category-${event.id}`}
+                  >
+                    {event.category === 'meeting' && 'Встреча'}
+                    {event.category === 'project' && 'Проект'}
+                    {event.category === 'deadline' && 'Дедлайн'}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Admin Notice */}
+      {!isAdmin && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-start">
+            <Users className="w-5 h-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" />
+            <div>
+              <h4 className="text-sm font-medium text-yellow-800" data-testid="title-user-notice">
+                Режим просмотра
+              </h4>
+              <p className="text-sm text-yellow-700 mt-1" data-testid="text-user-notice">
+                Вы можете просматривать события, но не можете их создавать или редактировать. 
+                Только администраторы имеют права на управление событиями.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

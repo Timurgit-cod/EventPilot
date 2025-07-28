@@ -3,8 +3,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Calendar from "@/components/Calendar";
 import Sidebar from "@/components/Sidebar";
-import { Bell, ChevronDown } from "lucide-react";
+import { Bell, ChevronDown, Shield, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { User as UserType } from "@shared/schema";
 
 export default function Home() {
   const { toast } = useToast();
@@ -40,6 +41,9 @@ export default function Home() {
     return null; // Will redirect via useEffect
   }
 
+  const typedUser = user as UserType;
+  const isAdmin = typedUser?.isAdmin || false;
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -51,9 +55,11 @@ export default function Home() {
                 <i className="fas fa-calendar-alt text-blue-600 text-xl"></i>
                 <h1 className="text-xl font-semibold text-gray-900">Календарь Событий</h1>
               </div>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-600">
-                <i className="fas fa-shield-alt mr-1"></i>
-                Администратор
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                isAdmin ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-600'
+              }`}>
+                {isAdmin ? <Shield className="w-3 h-3 mr-1" /> : <User className="w-3 h-3 mr-1" />}
+                {isAdmin ? 'Администратор' : 'Пользователь'}
               </span>
             </div>
             
@@ -70,13 +76,13 @@ export default function Home() {
               
               <div className="flex items-center space-x-3">
                 <img 
-                  src={user?.profileImageUrl || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=40&h=40"}
-                  alt="Профиль администратора" 
+                  src={typedUser?.profileImageUrl || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=40&h=40"}
+                  alt="Профиль пользователя" 
                   className="w-8 h-8 rounded-full object-cover"
                   data-testid="img-avatar"
                 />
                 <span className="text-sm font-medium text-gray-700" data-testid="text-username">
-                  {user?.firstName || user?.email || 'Администратор'}
+                  {typedUser?.firstName || typedUser?.email || 'Пользователь'}
                 </span>
                 <Button
                   variant="ghost"
@@ -96,10 +102,10 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
           <div className="xl:col-span-3">
-            <Calendar />
+            <Calendar isAdmin={isAdmin} />
           </div>
           <div className="xl:col-span-1">
-            <Sidebar />
+            <Sidebar isAdmin={isAdmin} />
           </div>
         </div>
       </div>

@@ -1,9 +1,30 @@
-import type { Express } from "express";
+import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertEventSchema, updateEventSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
+
+// Check if user is admin
+const isAdmin: RequestHandler = async (req, res, next) => {
+  try {
+    const user = req.user as any;
+    
+    if (!req.isAuthenticated() || !user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const dbUser = await storage.getUser(user.claims.sub);
+    if (!dbUser || !dbUser.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    next();
+  } catch (error) {
+    console.error("Admin check error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -21,8 +42,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Event routes
-  app.get("/api/events", isAuthenticated, async (req, res) => {
+  // Event routes - all authenticated users can view events
+  app.get("/api/events", async (req, res) => {
     try {
       const { year, month } = req.query;
       
@@ -42,7 +63,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/events/:id", isAuthenticated, async (req, res) => {
+  app.get("/api/events/:id", async (req, res) => {
     try {
       const event = await storage.getEvent(req.params.id);
       if (!event) {
@@ -55,7 +76,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/events", isAuthenticated, async (req: any, res) => {
+  app.post("/api/events", isAdmin, async (req: any, res) => {
     try {
       const validationResult = insertEventSchema.safeParse(req.body);
       if (!validationResult.success) {
@@ -72,7 +93,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/events/:id", isAuthenticated, async (req, res) => {
+  app.put("/api/events/:id", isAdmin, async (req, res) => {
     try {
       const validationResult = updateEventSchema.safeParse(req.body);
       if (!validationResult.success) {
@@ -91,7 +112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/events/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/events/:id", isAdmin, async (req, res) => {
     try {
       const deleted = await storage.deleteEvent(req.params.id);
       if (!deleted) {

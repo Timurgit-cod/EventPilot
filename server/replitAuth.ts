@@ -57,12 +57,18 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
+  // Check if this is the first user, make them admin
+  const existingUser = await storage.getUser(claims["sub"]);
+  const allUsers = await storage.getAllUsers();
+  const isFirstUser = allUsers.length === 0 && !existingUser;
+  
   await storage.upsertUser({
     id: claims["sub"],
     email: claims["email"],
-    firstName: claims["first_name"],
+    firstName: claims["first_name"],  
     lastName: claims["last_name"],
     profileImageUrl: claims["profile_image_url"],
+    isAdmin: existingUser?.isAdmin || isFirstUser,
   });
 }
 
