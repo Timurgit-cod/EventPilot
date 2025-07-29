@@ -1,45 +1,94 @@
 import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertEventSchema, updateEventSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
+import session from "express-session";
+import MemoryStore from "memorystore";
 
-// Check if user is admin
-const isAdmin: RequestHandler = async (req, res, next) => {
-  try {
-    const user = req.user as any;
-    
-    if (!req.isAuthenticated() || !user?.claims?.sub) {
-      return res.status(401).json({ message: "Unauthorized" });
+// Simple auth credentials
+const USERS = {
+  'admincibwest': { password: 'calendarcibwest', isAdmin: true, id: 'admin' },
+  'user': { password: '12345test', isAdmin: false, id: 'user' }
+};
+
+// Session middleware setup
+const setupSession = (app: Express) => {
+  const SessionStore = MemoryStore(session);
+  
+  app.use(session({
+    secret: process.env.SESSION_SECRET || 'calendar-secret-key',
+    store: new SessionStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    }),
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: false, // set to true in production with HTTPS
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
+  }));
+};
 
-    const dbUser = await storage.getUser(user.claims.sub);
-    if (!dbUser || !dbUser.isAdmin) {
-      return res.status(403).json({ message: "Admin access required" });
-    }
-
+// Authentication middleware
+const isAuthenticated: RequestHandler = (req, res, next) => {
+  if (req.session && (req.session as any).user) {
     next();
-  } catch (error) {
-    console.error("Admin check error:", error);
-    res.status(500).json({ message: "Server error" });
+  } else {
+    res.status(401).json({ message: "Unauthorized" });
+  }
+};
+
+// Admin check middleware
+const isAdmin: RequestHandler = (req, res, next) => {
+  if (req.session && (req.session as any).user && (req.session as any).user.isAdmin) {
+    next();
+  } else {
+    res.status(403).json({ message: "Admin access required" });
   }
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
-  await setupAuth(app);
+  // Setup session middleware
+  setupSession(app);
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
+  // Login route
+  app.post('/api/auth/login', (req, res) => {
+    const { username, password } = req.body;
+    
+    const user = USERS[username as keyof typeof USERS];
+    if (!user || user.password !== password) {
+      return res.status(401).json({ message: "Неверный логин или пароль" });
     }
+    
+    (req.session as any).user = {
+      id: user.id,
+      username,
+      isAdmin: user.isAdmin
+    };
+    
+    res.json({ success: true, user: { id: user.id, username, isAdmin: user.isAdmin } });
+  });
+  
+  // Logout route
+  app.post('/api/auth/logout', (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Ошибка при выходе" });
+      }
+      res.json({ success: true });
+    });
+  });
+
+  // Get current user
+  app.get('/api/auth/user', isAuthenticated, (req, res) => {
+    const sessionUser = (req.session as any).user;
+    res.json({
+      id: sessionUser.id,
+      username: sessionUser.username,
+      isAdmin: sessionUser.isAdmin
+    });
   });
 
   // Event routes - all authenticated users can view events
