@@ -221,51 +221,61 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
         {/* Calendar Grid */}
         <div className="p-6 flex-1 flex flex-col">
           {/* Week Days Header */}
-          <div className="grid grid-cols-7 gap-1 mb-1">
-            {DAYS_OF_WEEK.map(day => (
-              <div key={day} className="p-3 text-center text-sm font-semibold text-gray-600 bg-gray-50">
-                {day}
-              </div>
-            ))}
+          <div className="flex gap-1 mb-1">
+            {DAYS_OF_WEEK.map((day, index) => {
+              const isWeekend = index === 5 || index === 6; // Сб и Вс
+              return (
+                <div key={day} className={`p-3 text-center text-sm font-semibold text-gray-600 bg-gray-50 ${isWeekend ? 'w-16' : 'flex-1'}`}>
+                  {day}
+                </div>
+              );
+            })}
           </div>
 
           {/* Calendar Days Grid */}
           <div className="relative bg-gray-200 flex-1">
-            <div className="grid grid-cols-7 gap-1 h-full" id="calendar-grid">
-              {days.map((day, index) => {
-                const isCurrentDay = isToday(day.fullDate);
-                const dateStr = formatDate(day.fullDate);
-                
-                return (
-                  <div
-                    key={index}
-                    className={`
-                      bg-white min-h-[180px] p-3 relative transition-all ${isAdmin ? 'cursor-pointer hover:bg-gray-50' : ''}
-                      ${isCurrentDay ? 'bg-blue-50 border-2 border-blue-200' : ''}
-                      ${selectedDate === dateStr ? 'ring-2 ring-blue-300' : ''}
-                    `}
-                    onClick={() => {
-                      if (!isAdmin) return;
-                      setSelectedDate(dateStr);
-                    }}
-                    data-testid={`calendar-day-${dateStr}`}
-                  >
-                    <span className={`
-                      text-sm font-medium
-                      ${day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}
-                      ${isCurrentDay ? 'font-bold text-blue-700' : ''}
-                    `}>
-                      {day.date}
-                    </span>
+            <div className="flex gap-1 h-full flex-col" id="calendar-grid">
+              {Array.from({ length: Math.ceil(days.length / 7) }, (_, weekIndex) => (
+                <div key={weekIndex} className="flex gap-1 flex-1">
+                  {days.slice(weekIndex * 7, (weekIndex + 1) * 7).map((day, dayIndex) => {
+                    const index = weekIndex * 7 + dayIndex;
+                    const isCurrentDay = isToday(day.fullDate);
+                    const dateStr = formatDate(day.fullDate);
+                    const isWeekend = dayIndex === 5 || dayIndex === 6; // Сб и Вс
                     
-                    {isCurrentDay && (
-                      <span className="absolute top-1 right-1 text-xs text-blue-600 font-medium">
-                        Сегодня
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
+                    return (
+                      <div
+                        key={index}
+                        className={`
+                          bg-white min-h-[180px] p-3 relative transition-all ${isAdmin ? 'cursor-pointer hover:bg-gray-50' : ''}
+                          ${isCurrentDay ? 'bg-blue-50 border-2 border-blue-200' : ''}
+                          ${selectedDate === dateStr ? 'ring-2 ring-blue-300' : ''}
+                          ${isWeekend ? 'w-16' : 'flex-1'}
+                        `}
+                        onClick={() => {
+                          if (!isAdmin) return;
+                          setSelectedDate(dateStr);
+                        }}
+                        data-testid={`calendar-day-${dateStr}`}
+                      >
+                        <span className={`
+                          text-sm font-medium
+                          ${day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}
+                          ${isCurrentDay ? 'font-bold text-blue-700' : ''}
+                        `}>
+                          {day.date}
+                        </span>
+                        
+                        {isCurrentDay && (
+                          <span className="absolute top-1 right-1 text-xs text-blue-600 font-medium">
+                            Сегодня
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
             
             {/* События как отдельный слой */}
@@ -331,11 +341,29 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
               return eventsWithPositions.map(({ event, row, col, span, layer }) => {
                 const colors = EVENT_COLORS[event.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.internal;
                 
-                // Расчет позиции с учетом увеличенной высоты
-                const cellWidth = `calc((100% - 24px) / 7)`;
-                const left = `calc(${col} * (${cellWidth} + 4px) + 4px + 12px)`;
-                const width = `calc(${span} * ${cellWidth} + ${(span - 1) * 4}px - 24px)`;
-                const top = `calc(${row} * 180px + 48px + ${layer * 26}px + 4px)`; // Увеличили отступ между событиями
+                // Расчет позиции с учетом разной ширины колонок
+                const weekdayWidth = `calc((100% - 32px - 8px) / 5)`; // 5 будних дней, 32px для выходных, 8px для gap
+                const weekendWidth = '64px'; // w-16 = 64px
+                
+                let left, width;
+                if (col < 5) { // Будний день
+                  left = `calc(${col} * (${weekdayWidth} + 4px) + 4px + 12px)`;
+                  if (col + span <= 5) {
+                    // Событие полностью в будних днях
+                    width = `calc(${span} * ${weekdayWidth} + ${(span - 1) * 4}px - 24px)`;
+                  } else {
+                    // Событие переходит на выходные
+                    const weekdaySpan = 5 - col;
+                    const weekendSpan = span - weekdaySpan;
+                    width = `calc(${weekdaySpan} * ${weekdayWidth} + ${weekendSpan} * 64px + ${(span - 1) * 4}px - 24px)`;
+                  }
+                } else { // Выходной день
+                  const weekdayOffset = `calc(5 * (${weekdayWidth} + 4px))`;
+                  left = `calc(${weekdayOffset} + ${(col - 5) * 68}px + 4px + 12px)`;
+                  width = `calc(${span} * 64px + ${(span - 1) * 4}px - 24px)`;
+                }
+                
+                const top = `calc(${row} * 180px + 48px + ${layer * 26}px + 4px)`;
                 
                 return (
                   <div
