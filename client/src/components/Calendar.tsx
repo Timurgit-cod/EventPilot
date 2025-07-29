@@ -221,128 +221,148 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
         {/* Calendar Grid */}
         <div className="p-6 flex-1 flex flex-col">
           {/* Week Days Header */}
-          <div className="flex gap-1 mb-1">
-            {DAYS_OF_WEEK.map((day, index) => {
-              const isWeekend = index === 5 || index === 6; // Сб и Вс
-              return (
-                <div key={day} className={`p-3 text-center text-sm font-semibold text-gray-600 bg-gray-50 ${isWeekend ? 'w-16' : 'flex-1'}`}>
-                  {day}
-                </div>
-              );
-            })}
+          <div className="grid grid-cols-7 gap-1 mb-1">
+            {DAYS_OF_WEEK.map(day => (
+              <div key={day} className="p-3 text-center text-sm font-semibold text-gray-600 bg-gray-50">
+                {day}
+              </div>
+            ))}
           </div>
 
           {/* Calendar Days Grid */}
           <div className="relative bg-gray-200 flex-1">
-            <div className="flex gap-1 h-full flex-col" id="calendar-grid">
-              {Array.from({ length: Math.ceil(days.length / 7) }, (_, weekIndex) => (
-                <div key={weekIndex} className="flex gap-1 flex-1">
-                  {days.slice(weekIndex * 7, (weekIndex + 1) * 7).map((day, dayIndex) => {
-                    const index = weekIndex * 7 + dayIndex;
-                    const isCurrentDay = isToday(day.fullDate);
-                    const dateStr = formatDate(day.fullDate);
-                    const isWeekend = dayIndex === 5 || dayIndex === 6; // Сб и Вс
+            <div className="grid grid-cols-7 gap-1 h-full" id="calendar-grid">
+              {days.map((day, index) => {
+                const isCurrentDay = isToday(day.fullDate);
+                const dateStr = formatDate(day.fullDate);
+                
+                return (
+                  <div
+                    key={index}
+                    className={`
+                      bg-white min-h-[180px] p-3 relative transition-all ${isAdmin ? 'cursor-pointer hover:bg-gray-50' : ''}
+                      ${isCurrentDay ? 'bg-blue-50 border-2 border-blue-200' : ''}
+                      ${selectedDate === dateStr ? 'ring-2 ring-blue-300' : ''}
+                    `}
+                    onClick={() => {
+                      if (!isAdmin) return;
+                      setSelectedDate(dateStr);
+                    }}
+                    data-testid={`calendar-day-${dateStr}`}
+                  >
+                    <span className={`
+                      text-sm font-medium
+                      ${day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}
+                      ${isCurrentDay ? 'font-bold text-blue-700' : ''}
+                    `}>
+                      {day.date}
+                    </span>
                     
-                    return (
-                      <div
-                        key={index}
-                        className={`
-                          bg-white min-h-[180px] p-3 relative transition-all ${isAdmin ? 'cursor-pointer hover:bg-gray-50' : ''}
-                          ${isCurrentDay ? 'bg-blue-50 border-2 border-blue-200' : ''}
-                          ${selectedDate === dateStr ? 'ring-2 ring-blue-300' : ''}
-                          ${isWeekend ? 'w-16' : 'flex-1'}
-                        `}
-                        onClick={() => {
-                          if (!isAdmin) return;
-                          setSelectedDate(dateStr);
-                        }}
-                        data-testid={`calendar-day-${dateStr}`}
-                      >
-                        <span className={`
-                          text-sm font-medium
-                          ${day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}
-                          ${isCurrentDay ? 'font-bold text-blue-700' : ''}
-                        `}>
-                          {day.date}
-                        </span>
-                        
-                        {isCurrentDay && (
-                          <span className="absolute top-1 right-1 text-xs text-blue-600 font-medium">
-                            Сегодня
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
+                    {isCurrentDay && (
+                      <span className="absolute top-1 right-1 text-xs text-blue-600 font-medium">
+                        Сегодня
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
             
-            {/* События внутри каждого дня */}
-            {Array.from({ length: Math.ceil(days.length / 7) }, (_, weekIndex) => (
-              <div key={`events-week-${weekIndex}`} className="absolute inset-0 pointer-events-none" style={{ top: `${weekIndex * 180}px`, height: '180px' }}>
-                {days.slice(weekIndex * 7, (weekIndex + 1) * 7).map((day, dayIndex) => {
-                  const dateStr = formatDate(day.fullDate);
-                  const dayEvents = events.filter(event => {
-                    const eventStartDate = new Date(event.startDate);
-                    const eventEndDate = new Date(event.endDate);
-                    const dayDate = new Date(dateStr);
-                    
-                    const isInCurrentMonth = eventStartDate.getMonth() === currentDate.getMonth() && 
-                                           eventStartDate.getFullYear() === currentDate.getFullYear();
-                    
-                    // Проверяем, попадает ли этот день в период события
-                    const isInEventPeriod = dayDate >= eventStartDate && dayDate <= eventEndDate;
-                    
-                    // Применяем фильтры категорий
-                    const categoryFilter = filters[event.category as keyof FilterOptions];
-                    
-                    return isInCurrentMonth && isInEventPeriod && categoryFilter;
-                  });
-                  
-                  const isWeekend = dayIndex === 5 || dayIndex === 6;
-                  
-                  return (
-                    <div 
-                      key={`day-events-${dateStr}`} 
-                      className={`absolute top-8 ${isWeekend ? 'w-16' : 'flex-1'} pointer-events-auto`}
-                      style={{
-                        left: dayIndex < 5 
-                          ? `calc(${dayIndex} * (calc((100% - 32px - 8px) / 5) + 4px))` 
-                          : `calc(5 * (calc((100% - 32px - 8px) / 5) + 4px) + ${(dayIndex - 5) * 68}px)`
-                      }}
-                    >
-                      {dayEvents.map((event, eventIndex) => {
-                        const colors = EVENT_COLORS[event.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.internal;
-                        
-                        return (
-                          <div
-                            key={event.id}
-                            className={`mb-1 flex items-center text-sm py-1 px-2 cursor-pointer ${colors.bg} rounded whitespace-nowrap`}
-                            style={{
-                              height: '22px',
-                              maxWidth: '100%'
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (isAdmin) {
-                                handleEditEvent(event);
-                              } else {
-                                handleViewEvent(event);
-                              }
-                            }}
-                            data-testid={`event-${event.id}`}
-                          >
-                            <span className={`w-2 h-2 rounded-full inline-block mr-1 flex-shrink-0 ${colors.dot}`}></span>
-                            <span className="truncate text-black font-semibold">{event.title}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
+            {/* События как отдельный слой */}
+            {(() => {
+              // Группируем события по неделям и вычисляем их слои
+              const eventsWithPositions: Array<{
+                event: Event;
+                row: number;
+                col: number;
+                span: number;
+                layer: number;
+              }> = [];
+              
+              const visibleEvents = events.filter(event => {
+                const eventStartDate = new Date(event.startDate);
+                const isInCurrentMonth = eventStartDate.getMonth() === currentDate.getMonth() && 
+                                       eventStartDate.getFullYear() === currentDate.getFullYear();
+                
+                // Применяем фильтры категорий
+                const categoryFilter = filters[event.category as keyof FilterOptions];
+                
+                return isInCurrentMonth && categoryFilter;
+              });
+              
+              visibleEvents.forEach(event => {
+                const startDayIndex = days.findIndex(day => formatDate(day.fullDate) === event.startDate);
+                if (startDayIndex === -1) return;
+                
+                const startDate = new Date(event.startDate);
+                const endDate = new Date(event.endDate);
+                const timeDiff = endDate.getTime() - startDate.getTime();
+                const daysDuration = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1;
+                
+                const row = Math.floor(startDayIndex / 7);
+                const col = startDayIndex % 7;
+                const daysToEndOfWeek = 7 - col;
+                const eventSpan = Math.min(daysDuration, daysToEndOfWeek);
+                
+                // Находим свободный слой для этого события
+                let layer = 0;
+                const eventsInSameRow = eventsWithPositions.filter(ep => ep.row === row);
+                
+                while (true) {
+                  const conflict = eventsInSameRow.find(ep => 
+                    ep.layer === layer && 
+                    ((col >= ep.col && col < ep.col + ep.span) || 
+                     (col + eventSpan > ep.col && col < ep.col + ep.span))
                   );
-                })}
-              </div>
-            ))}
+                  
+                  if (!conflict) break;
+                  layer++;
+                }
+                
+                eventsWithPositions.push({
+                  event,
+                  row,
+                  col,
+                  span: eventSpan,
+                  layer
+                });
+              });
+              
+              return eventsWithPositions.map(({ event, row, col, span, layer }) => {
+                const colors = EVENT_COLORS[event.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.internal;
+                
+                // Расчет позиции с учетом увеличенной высоты
+                const cellWidth = `calc((100% - 24px) / 7)`;
+                const left = `calc(${col} * (${cellWidth} + 4px) + 4px + 12px)`;
+                const width = `calc(${span} * ${cellWidth} + ${(span - 1) * 4}px - 24px)`;
+                const top = `calc(${row} * 180px + 48px + ${layer * 26}px + 4px)`;
+                
+                return (
+                  <div
+                    key={event.id}
+                    className={`absolute flex items-center text-sm py-1 px-2 cursor-pointer ${colors.bg} rounded z-20 whitespace-nowrap`}
+                    style={{
+                      left,
+                      width,
+                      top,
+                      height: '22px'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isAdmin) {
+                        handleEditEvent(event);
+                      } else {
+                        handleViewEvent(event);
+                      }
+                    }}
+                    data-testid={`event-${event.id}`}
+                  >
+                    <span className={`w-2 h-2 rounded-full inline-block mr-1 flex-shrink-0 ${colors.dot}`}></span>
+                    <span className="truncate text-black font-semibold">{event.title}</span>
+                  </div>
+                );
+              });
+            })()}
           </div>
         </div>
       </div>
