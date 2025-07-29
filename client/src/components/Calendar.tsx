@@ -91,32 +91,22 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
   const getEventsForDate = (date: Date) => {
     const dateStr = formatDate(date);
     return events.filter(event => {
-      // Проверяем, попадает ли дата в период события
-      return dateStr >= event.startDate && dateStr <= event.endDate;
+      // Только события, которые НАЧИНАЮТСЯ в этот день - для отображения блока
+      return dateStr === event.startDate;
     });
   };
 
-  const getEventPosition = (event: Event, date: Date) => {
-    const dateStr = formatDate(date);
+  const getEventSpan = (event: Event, dayIndex: number) => {
     const startDate = new Date(event.startDate);
     const endDate = new Date(event.endDate);
-    const currentDate = new Date(dateStr);
     
-    // Определяем позицию события относительно текущей даты
-    const isStart = dateStr === event.startDate;
-    const isEnd = dateStr === event.endDate;
-    const isMiddle = dateStr > event.startDate && dateStr < event.endDate;
+    // Вычисляем количество дней
+    const timeDiff = endDate.getTime() - startDate.getTime();
+    const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1;
     
-    // Вычисляем длительность события в днях
-    const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    
-    return {
-      isStart,
-      isEnd,
-      isMiddle,
-      duration,
-      isSingleDay: event.startDate === event.endDate
-    };
+    // Ограничиваем размах до конца недели
+    const daysLeftInWeek = 7 - (dayIndex % 7);
+    return Math.min(daysDiff, daysLeftInWeek);
   };
 
   const navigateMonth = (direction: 'prev' | 'next') => {
@@ -215,88 +205,94 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
           </div>
 
           {/* Calendar Days Grid */}
-          <div className="grid grid-cols-7 gap-1 bg-gray-200 flex-1">
-            {days.map((day, index) => {
-              const dayEvents = getEventsForDate(day.fullDate);
-              const isCurrentDay = isToday(day.fullDate);
+          <div className="relative bg-gray-200 flex-1">
+            <div className="grid grid-cols-7 gap-1 h-full" id="calendar-grid">
+              {days.map((day, index) => {
+                const isCurrentDay = isToday(day.fullDate);
+                const dateStr = formatDate(day.fullDate);
+                
+                return (
+                  <div
+                    key={index}
+                    className={`
+                      bg-white min-h-[120px] p-3 relative transition-all ${isAdmin ? 'cursor-pointer hover:bg-gray-50' : ''}
+                      ${isCurrentDay ? 'bg-blue-50 border-2 border-blue-200' : ''}
+                      ${selectedDate === dateStr ? 'ring-2 ring-blue-300' : ''}
+                    `}
+                    onClick={() => {
+                      if (!isAdmin) return;
+                      setSelectedDate(dateStr);
+                      handleAddEvent(dateStr);
+                    }}
+                    data-testid={`calendar-day-${dateStr}`}
+                  >
+                    <span className={`
+                      text-sm font-medium
+                      ${day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}
+                      ${isCurrentDay ? 'font-bold text-blue-700' : ''}
+                    `}>
+                      {day.date}
+                    </span>
+                    
+                    {isCurrentDay && (
+                      <span className="absolute top-1 right-1 text-xs text-blue-600 font-medium">
+                        Сегодня
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* События как отдельный слой */}
+            {events.filter(event => {
+              // Отображаем только события, которые начинаются в текущем месяце
+              const eventStartDate = new Date(event.startDate);
+              return eventStartDate.getMonth() === currentDate.getMonth() && 
+                     eventStartDate.getFullYear() === currentDate.getFullYear();
+            }).map((event, eventIndex) => {
+              const colors = EVENT_COLORS[event.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.internal;
+              const startDate = new Date(event.startDate);
+              const endDate = new Date(event.endDate);
               
-
-              const dateStr = formatDate(day.fullDate);
+              // Находим позицию начального дня в сетке
+              const startDayIndex = days.findIndex(day => formatDate(day.fullDate) === event.startDate);
+              if (startDayIndex === -1) return null;
+              
+              // Вычисляем количество дней события
+              const timeDiff = endDate.getTime() - startDate.getTime();
+              const daysDuration = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1;
+              
+              // Ограничиваем до конца недели
+              const row = Math.floor(startDayIndex / 7);
+              const col = startDayIndex % 7;
+              const daysToEndOfWeek = 7 - col;
+              const eventSpan = Math.min(daysDuration, daysToEndOfWeek);
+              
+              // Расчет позиции
+              const cellWidth = `calc((100% - 24px) / 7)`;  // 24px для gap между колонками (6 gaps * 4px)
+              const left = `calc(${col} * (${cellWidth} + 4px) + 4px + 12px)`; // +12px для padding
+              const width = `calc(${eventSpan} * ${cellWidth} + ${(eventSpan - 1) * 4}px - 24px)`;
+              const top = `calc(${row} * 120px + 48px + ${eventIndex % 2 * 24}px + 4px)`;
               
               return (
                 <div
-                  key={index}
-                  className={`
-                    bg-white min-h-[120px] p-3 relative transition-all ${isAdmin ? 'cursor-pointer hover:bg-gray-50' : ''}
-                    ${isCurrentDay ? 'bg-blue-50 border-2 border-blue-200' : ''}
-                    ${selectedDate === dateStr ? 'ring-2 ring-blue-300' : ''}
-                  `}
-                  onClick={() => {
-                    if (!isAdmin) return;
-                    setSelectedDate(dateStr);
-                    if (dayEvents.length === 0) {
-                      handleAddEvent(dateStr);
-                    }
+                  key={event.id}
+                  className={`absolute flex items-center text-xs py-1 px-2 ${isAdmin ? 'cursor-pointer' : ''} ${colors.bg} ${colors.text} rounded z-20 whitespace-nowrap`}
+                  style={{
+                    left,
+                    width,
+                    top,
+                    height: '20px'
                   }}
-                  data-testid={`calendar-day-${dateStr}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditEvent(event);
+                  }}
+                  data-testid={`event-${event.id}`}
                 >
-                  <span className={`
-                    text-sm font-medium
-                    ${day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}
-                    ${isCurrentDay ? 'font-bold text-blue-700' : ''}
-                  `}>
-                    {day.date}
-                  </span>
-                  
-                  {isCurrentDay && (
-                    <span className="absolute top-1 right-1 text-xs text-blue-600 font-medium">
-                      Сегодня
-                    </span>
-                  )}
-                  
-                  <div className="mt-1 space-y-1">
-                    {dayEvents.slice(0, 2).map(event => {
-                      const colors = EVENT_COLORS[event.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.internal;
-                      const position = getEventPosition(event, day.fullDate);
-                      
-                      // Стили для многодневных событий
-                      let eventClasses = `flex items-center text-xs py-1 px-2 ${isAdmin ? 'cursor-pointer' : ''} ${colors.bg} ${colors.text} relative`;
-                      
-                      if (position.isSingleDay) {
-                        eventClasses += ' rounded';
-                      } else if (position.isStart) {
-                        eventClasses += ' rounded-l';
-                      } else if (position.isEnd) {
-                        eventClasses += ' rounded-r';
-                      } else if (position.isMiddle) {
-                        eventClasses += ' rounded-none';
-                      }
-                      
-                      return (
-                        <div
-                          key={event.id}
-                          className={eventClasses}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditEvent(event);
-                          }}
-                          data-testid={`event-${event.id}`}
-                        >
-                          {(position.isStart || position.isSingleDay) && (
-                            <span className={`w-2 h-2 rounded-full inline-block mr-1 ${colors.dot}`}></span>
-                          )}
-                          <span className="truncate">
-                            {position.isStart || position.isSingleDay ? event.title : ''}
-                          </span>
-                        </div>
-                      );
-                    })}
-                    {dayEvents.length > 2 && (
-                      <div className="text-xs text-gray-500 px-2">
-                        +{dayEvents.length - 2} еще
-                      </div>
-                    )}
-                  </div>
+                  <span className={`w-2 h-2 rounded-full inline-block mr-1 flex-shrink-0 ${colors.dot}`}></span>
+                  <span className="truncate">{event.title}</span>
                 </div>
               );
             })}
