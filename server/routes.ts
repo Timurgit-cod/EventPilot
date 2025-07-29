@@ -7,10 +7,10 @@ import session from "express-session";
 import MemoryStore from "memorystore";
 import { randomUUID } from "crypto";
 
-// Simple auth credentials
-const USERS = {
-  'admincibwest': { password: 'calendarcibwest', isAdmin: true, id: 'admin' },
-  'user': { password: '12345test', isAdmin: false, id: 'user' }
+// Admin credentials for validation
+const ADMIN_CREDENTIALS = {
+  username: 'admincibwest',
+  password: 'calendarcibwest'
 };
 
 // Session middleware setup
