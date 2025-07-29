@@ -100,13 +100,8 @@ export default function Home() {
       </header>
 
       <div className="flex-1 px-4 sm:px-6 lg:px-8 py-4 h-0">
-        <div className="h-full flex gap-6">
-          <div className="flex-1">
-            <Calendar isAdmin={isAdmin} />
-          </div>
-          <div className="w-80 flex-shrink-0">
-            <Sidebar isAdmin={isAdmin} />
-          </div>
+        <div className="h-full">
+          <Calendar isAdmin={isAdmin} />
         </div>
       </div>
     </div>

@@ -45,20 +45,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Event routes - all authenticated users can view events
   app.get("/api/events", async (req, res) => {
     try {
-      const { year, month } = req.query;
-      
-      if (year && month) {
-        const events = await storage.getEventsByMonth(
-          parseInt(year as string), 
-          parseInt(month as string)
-        );
-        res.json(events);
-      } else {
-        const events = await storage.getEvents();
-        res.json(events);
-      }
+      const events = await storage.getEvents();
+      res.json(events);
     } catch (error) {
       console.error("Error fetching events:", error);
+      res.status(500).json({ message: "Failed to fetch events" });
+    }
+  });
+
+  app.get("/api/events/:year/:month", async (req, res) => {
+    try {
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      
+      if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+        return res.status(400).json({ message: "Invalid year or month" });
+      }
+      
+      const events = await storage.getEventsByMonth(year, month);
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching events by month:", error);
       res.status(500).json({ message: "Failed to fetch events" });
     }
   });

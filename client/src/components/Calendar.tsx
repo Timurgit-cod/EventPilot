@@ -32,6 +32,8 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
     queryKey: ['/api/events', currentDate.getFullYear(), currentDate.getMonth() + 1],
   });
 
+
+
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -75,7 +77,11 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
   };
 
   const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0];
+    // Форматируем дату в локальном времени, избегая проблем с UTC
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const isToday = (date: Date) => {
@@ -84,9 +90,10 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
 
   const getEventsForDate = (date: Date) => {
     const dateStr = formatDate(date);
-    return events.filter(event => 
-      dateStr >= event.startDate && dateStr <= event.endDate
-    );
+    return events.filter(event => {
+      // Проверяем, попадает ли дата в период события
+      return dateStr >= event.startDate && dateStr <= event.endDate;
+    });
   };
 
   const navigateMonth = (direction: 'prev' | 'next') => {
@@ -189,6 +196,8 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
             {days.map((day, index) => {
               const dayEvents = getEventsForDate(day.fullDate);
               const isCurrentDay = isToday(day.fullDate);
+              
+
               const dateStr = formatDate(day.fullDate);
               
               return (
