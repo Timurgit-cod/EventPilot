@@ -40,8 +40,8 @@ export const events = pgTable("events", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  date: varchar("date").notNull(), // YYYY-MM-DD format
-  time: varchar("time"), // HH:MM format
+  startDate: varchar("start_date").notNull(), // YYYY-MM-DD format
+  endDate: varchar("end_date").notNull(), // YYYY-MM-DD format
   category: varchar("category").notNull(),
   createdBy: varchar("created_by").notNull().references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),

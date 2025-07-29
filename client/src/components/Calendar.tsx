@@ -84,7 +84,9 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
 
   const getEventsForDate = (date: Date) => {
     const dateStr = formatDate(date);
-    return events.filter(event => event.date === dateStr);
+    return events.filter(event => 
+      dateStr >= event.startDate && dateStr <= event.endDate
+    );
   };
 
   const navigateMonth = (direction: 'prev' | 'next') => {

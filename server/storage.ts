@@ -8,7 +8,7 @@ import {
   type UpdateEvent,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, like, asc } from "drizzle-orm";
+import { eq, like, asc, or } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 // Interface for storage operations
@@ -78,8 +78,7 @@ export class MemStorage implements IStorage {
   // Event operations
   async getEvents(): Promise<Event[]> {
     return Array.from(this.events.values()).sort((a, b) => 
-      new Date(a.date + ' ' + (a.time || '00:00')).getTime() - 
-      new Date(b.date + ' ' + (b.time || '00:00')).getTime()
+      new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
     );
   }
 
@@ -88,10 +87,12 @@ export class MemStorage implements IStorage {
     const yearStr = year.toString();
     
     return Array.from(this.events.values())
-      .filter(event => event.date.startsWith(`${yearStr}-${monthStr}`))
+      .filter(event => 
+        event.startDate.startsWith(`${yearStr}-${monthStr}`) ||
+        event.endDate.startsWith(`${yearStr}-${monthStr}`)
+      )
       .sort((a, b) => 
-        new Date(a.date + ' ' + (a.time || '00:00')).getTime() - 
-        new Date(b.date + ' ' + (b.time || '00:00')).getTime()
+        new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
       );
   }
 
@@ -105,8 +106,8 @@ export class MemStorage implements IStorage {
       id,
       title: eventData.title,
       description: eventData.description || null,
-      date: eventData.date,
-      time: eventData.time || null,
+      startDate: eventData.startDate,
+      endDate: eventData.endDate,
       category: eventData.category,
       createdBy,
       createdAt: new Date(),
@@ -166,7 +167,7 @@ export class DatabaseStorage implements IStorage {
 
   // Event operations
   async getEvents(): Promise<Event[]> {
-    return await db.select().from(events).orderBy(asc(events.date), asc(events.time));
+    return await db.select().from(events).orderBy(asc(events.startDate));
   }
 
   async getEventsByMonth(year: number, month: number): Promise<Event[]> {
@@ -177,8 +178,11 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(events)
-      .where(like(events.date, datePattern))
-      .orderBy(asc(events.date), asc(events.time));
+      .where(or(
+        like(events.startDate, datePattern),
+        like(events.endDate, datePattern)
+      ))
+      .orderBy(asc(events.startDate));
   }
 
   async getEvent(id: string): Promise<Event | undefined> {
@@ -211,7 +215,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteEvent(id: string): Promise<boolean> {
     const result = await db.delete(events).where(eq(events.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 }
 

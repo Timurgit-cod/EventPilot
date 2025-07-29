@@ -29,12 +29,12 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const form = useForm<FormData>({
-    resolver: zodResolver(insertEventSchema.omit({ userId: true })),
+    resolver: zodResolver(insertEventSchema),
     defaultValues: {
       title: "",
       description: "",
-      date: selectedDate || new Date().toISOString().split('T')[0],
-      time: "",
+      startDate: selectedDate || new Date().toISOString().split('T')[0],
+      endDate: selectedDate || new Date().toISOString().split('T')[0],
       category: "meeting",
     },
   });
@@ -45,16 +45,16 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
       form.reset({
         title: event.title,
         description: event.description || "",
-        date: event.date,
-        time: event.time || "",
+        startDate: event.startDate,
+        endDate: event.endDate,
         category: event.category || "meeting",
       });
     } else if (selectedDate) {
       form.reset({
         title: "",
         description: "",
-        date: selectedDate,
-        time: "",
+        startDate: selectedDate,
+        endDate: selectedDate,
         category: "meeting",
       });
     }
@@ -62,10 +62,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
 
   const createMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      return await apiRequest("/api/events", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("/api/events", "POST", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
@@ -100,10 +97,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
   const updateMutation = useMutation({
     mutationFn: async (data: FormData) => {
       if (!event?.id) throw new Error("No event ID");
-      return await apiRequest(`/api/events/${event.id}`, {
-        method: "PUT",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest(`/api/events/${event.id}`, "PUT", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
@@ -137,9 +131,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
   const deleteMutation = useMutation({
     mutationFn: async () => {
       if (!event?.id) throw new Error("No event ID");
-      await apiRequest(`/api/events/${event.id}`, {
-        method: "DELETE",
-      });
+      await apiRequest(`/api/events/${event.id}`, "DELETE");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
@@ -232,23 +224,21 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Дата
+                    Дата начала
                   </label>
-                  <p className="text-gray-900" data-testid="text-event-date">
-                    {new Date(event.date).toLocaleDateString('ru-RU')}
+                  <p className="text-gray-900" data-testid="text-event-start-date">
+                    {new Date(event.startDate).toLocaleDateString('ru-RU')}
                   </p>
                 </div>
 
-                {event.time && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Время
-                    </label>
-                    <p className="text-gray-900" data-testid="text-event-time">
-                      {event.time}
-                    </p>
-                  </div>
-                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Дата окончания
+                  </label>
+                  <p className="text-gray-900" data-testid="text-event-end-date">
+                    {new Date(event.endDate).toLocaleDateString('ru-RU')}
+                  </p>
+                </div>
               </div>
 
               {event.category && (
@@ -344,6 +334,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                     <Textarea 
                       placeholder="Введите описание события" 
                       {...field} 
+                      value={field.value || ''}
                       data-testid="input-description"
                     />
                   </FormControl>
@@ -355,18 +346,19 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="date"
+                name="startDate"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center">
                       <Calendar className="w-4 h-4 mr-2" />
-                      Дата *
+                      Дата начала *
                     </FormLabel>
                     <FormControl>
                       <Input 
                         type="date" 
                         {...field} 
-                        data-testid="input-date"
+                        value={field.value || ''}
+                        data-testid="input-start-date"
                       />
                     </FormControl>
                     <FormMessage />
@@ -376,18 +368,19 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
 
               <FormField
                 control={form.control}
-                name="time"
+                name="endDate"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center">
-                      <Clock className="w-4 h-4 mr-2" />
-                      Время
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Дата окончания *
                     </FormLabel>
                     <FormControl>
                       <Input 
-                        type="time" 
+                        type="date" 
                         {...field} 
-                        data-testid="input-time"
+                        value={field.value || ''}
+                        data-testid="input-end-date"
                       />
                     </FormControl>
                     <FormMessage />
