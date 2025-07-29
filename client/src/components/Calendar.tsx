@@ -96,6 +96,29 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
     });
   };
 
+  const getEventPosition = (event: Event, date: Date) => {
+    const dateStr = formatDate(date);
+    const startDate = new Date(event.startDate);
+    const endDate = new Date(event.endDate);
+    const currentDate = new Date(dateStr);
+    
+    // Определяем позицию события относительно текущей даты
+    const isStart = dateStr === event.startDate;
+    const isEnd = dateStr === event.endDate;
+    const isMiddle = dateStr > event.startDate && dateStr < event.endDate;
+    
+    // Вычисляем длительность события в днях
+    const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    
+    return {
+      isStart,
+      isEnd,
+      isMiddle,
+      duration,
+      isSingleDay: event.startDate === event.endDate
+    };
+  };
+
   const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
       const newDate = new Date(prev);
@@ -234,18 +257,37 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   <div className="mt-1 space-y-1">
                     {dayEvents.slice(0, 2).map(event => {
                       const colors = EVENT_COLORS[event.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.internal;
+                      const position = getEventPosition(event, day.fullDate);
+                      
+                      // Стили для многодневных событий
+                      let eventClasses = `flex items-center text-xs py-1 px-2 ${isAdmin ? 'cursor-pointer' : ''} ${colors.bg} ${colors.text} relative`;
+                      
+                      if (position.isSingleDay) {
+                        eventClasses += ' rounded';
+                      } else if (position.isStart) {
+                        eventClasses += ' rounded-l';
+                      } else if (position.isEnd) {
+                        eventClasses += ' rounded-r';
+                      } else if (position.isMiddle) {
+                        eventClasses += ' rounded-none';
+                      }
+                      
                       return (
                         <div
                           key={event.id}
-                          className={`flex items-center text-xs px-2 py-1 rounded ${isAdmin ? 'cursor-pointer' : ''} ${colors.bg} ${colors.text}`}
+                          className={eventClasses}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleEditEvent(event);
                           }}
                           data-testid={`event-${event.id}`}
                         >
-                          <span className={`w-2 h-2 rounded-full inline-block mr-1 ${colors.dot}`}></span>
-                          <span className="truncate">{event.title}</span>
+                          {(position.isStart || position.isSingleDay) && (
+                            <span className={`w-2 h-2 rounded-full inline-block mr-1 ${colors.dot}`}></span>
+                          )}
+                          <span className="truncate">
+                            {position.isStart || position.isSingleDay ? event.title : ''}
+                          </span>
                         </div>
                       );
                     })}
