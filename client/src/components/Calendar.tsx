@@ -222,7 +222,6 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                     onClick={() => {
                       if (!isAdmin) return;
                       setSelectedDate(dateStr);
-                      handleAddEvent(dateStr);
                     }}
                     data-testid={`calendar-day-${dateStr}`}
                   >
@@ -311,7 +310,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 return (
                   <div
                     key={event.id}
-                    className={`absolute flex items-center text-xs py-1 px-2 ${isAdmin ? 'cursor-pointer' : ''} ${colors.bg} ${colors.text} rounded z-20 whitespace-nowrap`}
+                    className={`absolute flex items-center text-xs py-1 px-2 ${isAdmin ? 'cursor-pointer' : 'cursor-default'} ${colors.bg} ${colors.text} rounded z-20 whitespace-nowrap`}
                     style={{
                       left,
                       width,
@@ -319,6 +318,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                       height: '20px'
                     }}
                     onClick={(e) => {
+                      if (!isAdmin) return;
                       e.stopPropagation();
                       handleEditEvent(event);
                     }}
