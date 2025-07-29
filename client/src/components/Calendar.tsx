@@ -14,7 +14,7 @@ const MONTHS = [
 ];
 
 const EVENT_COLORS = {
-  internal: { bg: 'bg-yellow-50', text: 'text-yellow-700', dot: 'bg-yellow-500' },
+  internal: { bg: 'bg-yellow-200', text: 'text-yellow-900', dot: 'bg-yellow-600' },
   external: { bg: 'bg-pink-200', text: 'text-pink-800', dot: 'bg-pink-600' },
   foreign: { bg: 'bg-gray-50', text: 'text-gray-700', dot: 'bg-gray-500' },
 };
