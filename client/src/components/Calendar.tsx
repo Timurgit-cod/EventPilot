@@ -215,7 +215,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   <div
                     key={index}
                     className={`
-                      bg-white min-h-[120px] p-3 relative transition-all ${isAdmin ? 'cursor-pointer hover:bg-gray-50' : ''}
+                      bg-white min-h-[180px] p-3 relative transition-all ${isAdmin ? 'cursor-pointer hover:bg-gray-50' : ''}
                       ${isCurrentDay ? 'bg-blue-50 border-2 border-blue-200' : ''}
                       ${selectedDate === dateStr ? 'ring-2 ring-blue-300' : ''}
                     `}
@@ -245,57 +245,91 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
             </div>
             
             {/* События как отдельный слой */}
-            {events.filter(event => {
-              // Отображаем только события, которые начинаются в текущем месяце
-              const eventStartDate = new Date(event.startDate);
-              return eventStartDate.getMonth() === currentDate.getMonth() && 
-                     eventStartDate.getFullYear() === currentDate.getFullYear();
-            }).map((event, eventIndex) => {
-              const colors = EVENT_COLORS[event.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.internal;
-              const startDate = new Date(event.startDate);
-              const endDate = new Date(event.endDate);
+            {(() => {
+              // Группируем события по неделям и вычисляем их слои
+              const eventsWithPositions: Array<{
+                event: Event;
+                row: number;
+                col: number;
+                span: number;
+                layer: number;
+              }> = [];
               
-              // Находим позицию начального дня в сетке
-              const startDayIndex = days.findIndex(day => formatDate(day.fullDate) === event.startDate);
-              if (startDayIndex === -1) return null;
+              const visibleEvents = events.filter(event => {
+                const eventStartDate = new Date(event.startDate);
+                return eventStartDate.getMonth() === currentDate.getMonth() && 
+                       eventStartDate.getFullYear() === currentDate.getFullYear();
+              });
               
-              // Вычисляем количество дней события
-              const timeDiff = endDate.getTime() - startDate.getTime();
-              const daysDuration = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1;
+              visibleEvents.forEach(event => {
+                const startDayIndex = days.findIndex(day => formatDate(day.fullDate) === event.startDate);
+                if (startDayIndex === -1) return;
+                
+                const startDate = new Date(event.startDate);
+                const endDate = new Date(event.endDate);
+                const timeDiff = endDate.getTime() - startDate.getTime();
+                const daysDuration = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1;
+                
+                const row = Math.floor(startDayIndex / 7);
+                const col = startDayIndex % 7;
+                const daysToEndOfWeek = 7 - col;
+                const eventSpan = Math.min(daysDuration, daysToEndOfWeek);
+                
+                // Находим свободный слой для этого события
+                let layer = 0;
+                const eventsInSameRow = eventsWithPositions.filter(ep => ep.row === row);
+                
+                while (true) {
+                  const conflict = eventsInSameRow.find(ep => 
+                    ep.layer === layer && 
+                    ((col >= ep.col && col < ep.col + ep.span) || 
+                     (col + eventSpan > ep.col && col < ep.col + ep.span))
+                  );
+                  
+                  if (!conflict) break;
+                  layer++;
+                }
+                
+                eventsWithPositions.push({
+                  event,
+                  row,
+                  col,
+                  span: eventSpan,
+                  layer
+                });
+              });
               
-              // Ограничиваем до конца недели
-              const row = Math.floor(startDayIndex / 7);
-              const col = startDayIndex % 7;
-              const daysToEndOfWeek = 7 - col;
-              const eventSpan = Math.min(daysDuration, daysToEndOfWeek);
-              
-              // Расчет позиции
-              const cellWidth = `calc((100% - 24px) / 7)`;  // 24px для gap между колонками (6 gaps * 4px)
-              const left = `calc(${col} * (${cellWidth} + 4px) + 4px + 12px)`; // +12px для padding
-              const width = `calc(${eventSpan} * ${cellWidth} + ${(eventSpan - 1) * 4}px - 24px)`;
-              const top = `calc(${row} * 120px + 48px + ${eventIndex % 2 * 24}px + 4px)`;
-              
-              return (
-                <div
-                  key={event.id}
-                  className={`absolute flex items-center text-xs py-1 px-2 ${isAdmin ? 'cursor-pointer' : ''} ${colors.bg} ${colors.text} rounded z-20 whitespace-nowrap`}
-                  style={{
-                    left,
-                    width,
-                    top,
-                    height: '20px'
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEditEvent(event);
-                  }}
-                  data-testid={`event-${event.id}`}
-                >
-                  <span className={`w-2 h-2 rounded-full inline-block mr-1 flex-shrink-0 ${colors.dot}`}></span>
-                  <span className="truncate">{event.title}</span>
-                </div>
-              );
-            })}
+              return eventsWithPositions.map(({ event, row, col, span, layer }) => {
+                const colors = EVENT_COLORS[event.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.internal;
+                
+                // Расчет позиции с учетом увеличенной высоты
+                const cellWidth = `calc((100% - 24px) / 7)`;
+                const left = `calc(${col} * (${cellWidth} + 4px) + 4px + 12px)`;
+                const width = `calc(${span} * ${cellWidth} + ${(span - 1) * 4}px - 24px)`;
+                const top = `calc(${row} * 180px + 48px + ${layer * 24}px + 4px)`; // 180px - новая высота ячейки
+                
+                return (
+                  <div
+                    key={event.id}
+                    className={`absolute flex items-center text-xs py-1 px-2 ${isAdmin ? 'cursor-pointer' : ''} ${colors.bg} ${colors.text} rounded z-20 whitespace-nowrap`}
+                    style={{
+                      left,
+                      width,
+                      top,
+                      height: '20px'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditEvent(event);
+                    }}
+                    data-testid={`event-${event.id}`}
+                  >
+                    <span className={`w-2 h-2 rounded-full inline-block mr-1 flex-shrink-0 ${colors.dot}`}></span>
+                    <span className="truncate">{event.title}</span>
+                  </div>
+                );
+              });
+            })()}
           </div>
         </div>
       </div>
