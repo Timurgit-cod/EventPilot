@@ -102,9 +102,17 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
   const getEventsForDate = (date: Date) => {
     const dateStr = formatDate(date);
     return events.filter(event => {
-      // Только события, которые НАЧИНАЮТСЯ в этот день - для отображения блока
+      // События, которые НАЧИНАЮТСЯ в этот день (для отображения блока)
       return dateStr === event.startDate;
     });
+  };
+
+  // Проверяет, продолжается ли событие в указанную дату
+  const isEventContinuing = (event: Event, date: Date) => {
+    const dateStr = formatDate(date);
+    const startDate = event.startDate;
+    const endDate = event.endDate;
+    return dateStr >= startDate && dateStr <= endDate;
   };
 
   const getEventSpan = (event: Event, dayIndex: number) => {
@@ -283,53 +291,84 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 layer: number;
               }> = [];
               
+              // Фильтруем события - показываем те, которые пересекаются с видимыми днями
+              const firstVisibleDay = days[0].fullDate;
+              const lastVisibleDay = days[days.length - 1].fullDate;
+              
               const visibleEvents = events.filter(event => {
                 const eventStartDate = new Date(event.startDate);
-                const isInCurrentMonth = eventStartDate.getMonth() === currentDate.getMonth() && 
-                                       eventStartDate.getFullYear() === currentDate.getFullYear();
+                const eventEndDate = new Date(event.endDate);
+                
+                // Событие видимо, если оно пересекается с видимым диапазоном дней
+                const isVisible = eventStartDate <= lastVisibleDay && eventEndDate >= firstVisibleDay;
                 
                 // Применяем фильтры категорий
                 const categoryFilter = filters[event.category as keyof FilterOptions];
                 
-                return isInCurrentMonth && categoryFilter;
+                return isVisible && categoryFilter;
               });
               
+              // Обрабатываем каждое событие, создавая сегменты для каждой недели
               visibleEvents.forEach(event => {
-                const startDayIndex = days.findIndex(day => formatDate(day.fullDate) === event.startDate);
-                if (startDayIndex === -1) return;
+                const eventStartDate = new Date(event.startDate);
+                const eventEndDate = new Date(event.endDate);
                 
-                const startDate = new Date(event.startDate);
-                const endDate = new Date(event.endDate);
-                const timeDiff = endDate.getTime() - startDate.getTime();
-                const daysDuration = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1;
-                
-                const row = Math.floor(startDayIndex / 7);
-                const col = startDayIndex % 7;
-                const daysToEndOfWeek = 7 - col;
-                const eventSpan = Math.min(daysDuration, daysToEndOfWeek);
-                
-                // Находим свободный слой для этого события
-                let layer = 0;
-                const eventsInSameRow = eventsWithPositions.filter(ep => ep.row === row);
-                
-                while (true) {
-                  const conflict = eventsInSameRow.find(ep => 
-                    ep.layer === layer && 
-                    ((col >= ep.col && col < ep.col + ep.span) || 
-                     (col + eventSpan > ep.col && col < ep.col + ep.span))
-                  );
+                // Проходим по всем неделям календаря
+                for (let weekRow = 0; weekRow < 6; weekRow++) {
+                  const weekStartIndex = weekRow * 7;
+                  const weekEndIndex = Math.min(weekStartIndex + 6, days.length - 1);
                   
-                  if (!conflict) break;
-                  layer++;
+                  const weekStartDate = days[weekStartIndex].fullDate;
+                  const weekEndDate = days[weekEndIndex].fullDate;
+                  
+                  // Проверяем, пересекается ли событие с этой неделей
+                  if (eventStartDate <= weekEndDate && eventEndDate >= weekStartDate) {
+                    // Вычисляем начальную и конечную позицию события в этой неделе
+                    let segmentStartCol = 0;
+                    let segmentEndCol = 6;
+                    
+                    // Находим начальную колонку
+                    for (let i = weekStartIndex; i <= weekEndIndex; i++) {
+                      if (days[i].fullDate >= eventStartDate) {
+                        segmentStartCol = i - weekStartIndex;
+                        break;
+                      }
+                    }
+                    
+                    // Находим конечную колонку
+                    for (let i = weekEndIndex; i >= weekStartIndex; i--) {
+                      if (days[i].fullDate <= eventEndDate) {
+                        segmentEndCol = i - weekStartIndex;
+                        break;
+                      }
+                    }
+                    
+                    const segmentSpan = segmentEndCol - segmentStartCol + 1;
+                    
+                    // Находим свободный слой для этого сегмента события
+                    let layer = 0;
+                    const eventsInSameRow = eventsWithPositions.filter(ep => ep.row === weekRow);
+                    
+                    while (true) {
+                      const conflict = eventsInSameRow.find(ep => 
+                        ep.layer === layer && 
+                        ((segmentStartCol >= ep.col && segmentStartCol < ep.col + ep.span) || 
+                         (segmentStartCol + segmentSpan > ep.col && segmentStartCol < ep.col + ep.span))
+                      );
+                      
+                      if (!conflict) break;
+                      layer++;
+                    }
+                    
+                    eventsWithPositions.push({
+                      event,
+                      row: weekRow,
+                      col: segmentStartCol,
+                      span: segmentSpan,
+                      layer
+                    });
+                  }
                 }
-                
-                eventsWithPositions.push({
-                  event,
-                  row,
-                  col,
-                  span: eventSpan,
-                  layer
-                });
               });
               
               return eventsWithPositions.map(({ event, row, col, span, layer }) => {
