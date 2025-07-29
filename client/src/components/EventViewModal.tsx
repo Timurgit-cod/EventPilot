@@ -7,7 +7,6 @@ import {
 } from '@/components/ui/dialog';
 import { X, Calendar, Clock, Tag } from 'lucide-react';
 import type { Event } from '@shared/schema';
-import { apiRequest } from '@/lib/queryClient';
 import React from 'react';
 
 interface EventViewModalProps {
@@ -29,7 +28,7 @@ export function EventViewModal({ event, isOpen, onClose }: EventViewModalProps) 
   const logEventView = async () => {
     if (event && isOpen) {
       try {
-        await apiRequest('/api/analytics/event-view', {
+        await fetch('/api/analytics/event-view', {
           method: 'POST',
           body: JSON.stringify({ eventId: event.id }),
           headers: { 'Content-Type': 'application/json' }
@@ -71,7 +70,8 @@ export function EventViewModal({ event, isOpen, onClose }: EventViewModalProps) 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby="event-description">
+      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto"
+        aria-describedby={event.description ? "event-description" : "event-placeholder-description"}>
         <DialogHeader className="space-y-4">
           <div className="flex items-start justify-between">
             <DialogTitle className="text-2xl font-bold text-gray-900 pr-8 leading-tight">
@@ -128,7 +128,7 @@ export function EventViewModal({ event, isOpen, onClose }: EventViewModalProps) 
             <div className="space-y-3">
               <h3 className="text-lg font-semibold text-gray-900">Описание</h3>
               <div className="bg-gray-50 rounded-lg p-4 border">
-                <p id="event-description" className="text-gray-500 italic">
+                <p id="event-placeholder-description" className="text-gray-500 italic">
                   Описание для этого события не указано.
                 </p>
               </div>
