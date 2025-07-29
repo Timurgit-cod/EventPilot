@@ -54,12 +54,14 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
     const days = [];
     
     // Previous month days
-    const prevMonth = new Date(year, month - 1, 0);
+    const prevMonth = new Date(year, month, 0); // Последний день предыдущего месяца
+    const prevMonthDays = prevMonth.getDate();
     for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+      const dayNum = prevMonthDays - i;
       days.push({
-        date: prevMonth.getDate() - i,
+        date: dayNum,
         isCurrentMonth: false,
-        fullDate: new Date(year, month - 1, prevMonth.getDate() - i),
+        fullDate: new Date(year, month - 1, dayNum),
       });
     }
     
