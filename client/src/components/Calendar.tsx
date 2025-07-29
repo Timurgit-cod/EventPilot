@@ -163,6 +163,9 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
 
   const days = getDaysInMonth(currentDate);
 
+  // Debug log
+  console.log('Calendar isAdmin:', isAdmin, 'isModalOpen:', isModalOpen);
+
   return (
     <>
       <div className="bg-white rounded-lg shadow-sm overflow-hidden h-full flex flex-col">
