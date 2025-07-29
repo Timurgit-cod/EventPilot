@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EventModal from "./EventModal";
+import { EventFilters, type FilterOptions } from "./EventFilters";
 import type { Event } from "@shared/schema";
 
 const DAYS_OF_WEEK = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
@@ -27,6 +28,11 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [filters, setFilters] = useState<FilterOptions>({
+    internal: true,
+    external: true,
+    foreign: true,
+  });
 
   const { data: events = [], isLoading } = useQuery<Event[]>({
     queryKey: ['/api/events', currentDate.getFullYear(), currentDate.getMonth() + 1],
@@ -180,6 +186,12 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
             >
               Сегодня
             </Button>
+            
+            <EventFilters 
+              filters={filters} 
+              onFiltersChange={setFilters} 
+            />
+            
             {isAdmin && (
               <Button
                 onClick={() => handleAddEvent()}
@@ -256,8 +268,13 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
               
               const visibleEvents = events.filter(event => {
                 const eventStartDate = new Date(event.startDate);
-                return eventStartDate.getMonth() === currentDate.getMonth() && 
-                       eventStartDate.getFullYear() === currentDate.getFullYear();
+                const isInCurrentMonth = eventStartDate.getMonth() === currentDate.getMonth() && 
+                                       eventStartDate.getFullYear() === currentDate.getFullYear();
+                
+                // Применяем фильтры категорий
+                const categoryFilter = filters[event.category as keyof FilterOptions];
+                
+                return isInCurrentMonth && categoryFilter;
               });
               
               visibleEvents.forEach(event => {
