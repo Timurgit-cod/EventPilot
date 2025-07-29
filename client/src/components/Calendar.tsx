@@ -335,17 +335,17 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 const cellWidth = `calc((100% - 24px) / 7)`;
                 const left = `calc(${col} * (${cellWidth} + 4px) + 4px + 12px)`;
                 const width = `calc(${span} * ${cellWidth} + ${(span - 1) * 4}px - 24px)`;
-                const top = `calc(${row} * 180px + 48px + ${layer * 24}px + 4px)`; // 180px - новая высота ячейки
+                const top = `calc(${row} * 180px + 48px + ${layer * 26}px + 4px)`; // Увеличили отступ между событиями
                 
                 return (
                   <div
                     key={event.id}
-                    className={`absolute flex items-center text-xs py-1 px-2 cursor-pointer ${colors.bg} ${colors.text} rounded z-20 whitespace-nowrap`}
+                    className={`absolute flex items-center text-sm py-1 px-2 cursor-pointer ${colors.bg} rounded z-20 whitespace-nowrap`}
                     style={{
                       left,
                       width,
                       top,
-                      height: '20px'
+                      height: '22px'
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -358,7 +358,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                     data-testid={`event-${event.id}`}
                   >
                     <span className={`w-2 h-2 rounded-full inline-block mr-1 flex-shrink-0 ${colors.dot}`}></span>
-                    <span className="truncate">{event.title}</span>
+                    <span className="truncate text-black font-semibold">{event.title}</span>
                   </div>
                 );
               });
