@@ -256,7 +256,8 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           event={editingEvent}
-          selectedDate={selectedDate}
+          selectedDate={selectedDate || undefined}
+          isAdmin={isAdmin}
         />
       )}
     </>
