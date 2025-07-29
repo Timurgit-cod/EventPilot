@@ -35,7 +35,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
       description: "",
       startDate: selectedDate || new Date().toISOString().split('T')[0],
       endDate: selectedDate || new Date().toISOString().split('T')[0],
-      category: "meeting",
+      category: "internal",
     },
   });
 
@@ -47,7 +47,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
         description: event.description || "",
         startDate: event.startDate,
         endDate: event.endDate,
-        category: event.category || "meeting",
+        category: (event.category === 'internal' || event.category === 'external' || event.category === 'foreign') ? event.category : "internal",
       });
     } else if (selectedDate) {
       form.reset({
@@ -55,7 +55,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
         description: "",
         startDate: selectedDate,
         endDate: selectedDate,
-        category: "meeting",
+        category: "internal",
       });
     }
   }, [event, selectedDate, form]);
@@ -248,17 +248,17 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                   </label>
                   <span 
                     className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                      event.category === 'meeting' 
-                        ? 'bg-blue-100 text-blue-800'
-                        : event.category === 'project'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
+                      event.category === 'internal' 
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : event.category === 'external'
+                        ? 'bg-pink-100 text-pink-800'
+                        : 'bg-gray-100 text-gray-800'
                     }`}
                     data-testid="tag-event-category"
                   >
-                    {event.category === 'meeting' && 'Встреча'}
-                    {event.category === 'project' && 'Проект'}
-                    {event.category === 'deadline' && 'Дедлайн'}
+                    {event.category === 'internal' && 'Внутренняя активность'}
+                    {event.category === 'external' && 'Внешняя активность'}
+                    {event.category === 'foreign' && 'Зарубежная активность'}
                   </span>
                 </div>
               )}
@@ -405,9 +405,9 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="meeting">Встреча</SelectItem>
-                      <SelectItem value="project">Проект</SelectItem>
-                      <SelectItem value="deadline">Дедлайн</SelectItem>
+                      <SelectItem value="internal">Внутренняя активность</SelectItem>
+                      <SelectItem value="external">Внешняя активность</SelectItem>
+                      <SelectItem value="foreign">Зарубежная активность</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

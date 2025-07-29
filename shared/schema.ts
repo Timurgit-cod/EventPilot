@@ -53,6 +53,8 @@ export const insertEventSchema = createInsertSchema(events).omit({
   createdBy: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  category: z.enum(['internal', 'external', 'foreign'])
 });
 
 export const updateEventSchema = insertEventSchema.partial();

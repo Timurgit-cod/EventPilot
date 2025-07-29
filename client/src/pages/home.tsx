@@ -45,7 +45,7 @@ export default function Home() {
   const isAdmin = typedUser?.isAdmin || false;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -99,12 +99,12 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-          <div className="xl:col-span-3">
+      <div className="flex-1 px-4 sm:px-6 lg:px-8 py-4 h-0">
+        <div className="h-full flex gap-6">
+          <div className="flex-1">
             <Calendar isAdmin={isAdmin} />
           </div>
-          <div className="xl:col-span-1">
+          <div className="w-80 flex-shrink-0">
             <Sidebar isAdmin={isAdmin} />
           </div>
         </div>

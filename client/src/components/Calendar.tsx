@@ -12,9 +12,9 @@ const MONTHS = [
 ];
 
 const EVENT_COLORS = {
-  meeting: { bg: 'bg-green-50', text: 'text-green-600', dot: 'bg-green-500' },
-  project: { bg: 'bg-blue-50', text: 'text-blue-600', dot: 'bg-blue-500' },
-  deadline: { bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500' },
+  internal: { bg: 'bg-yellow-50', text: 'text-yellow-700', dot: 'bg-yellow-500' },
+  external: { bg: 'bg-pink-50', text: 'text-pink-700', dot: 'bg-pink-500' },
+  foreign: { bg: 'bg-gray-50', text: 'text-gray-700', dot: 'bg-gray-500' },
 };
 
 interface CalendarProps {
@@ -124,7 +124,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden h-full flex flex-col">
         {/* Calendar Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-4">
@@ -174,7 +174,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
         </div>
 
         {/* Calendar Grid */}
-        <div className="p-6">
+        <div className="p-6 flex-1 flex flex-col">
           {/* Week Days Header */}
           <div className="grid grid-cols-7 gap-1 mb-1">
             {DAYS_OF_WEEK.map(day => (
@@ -185,7 +185,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
           </div>
 
           {/* Calendar Days Grid */}
-          <div className="grid grid-cols-7 gap-1 bg-gray-200">
+          <div className="grid grid-cols-7 gap-1 bg-gray-200 flex-1">
             {days.map((day, index) => {
               const dayEvents = getEventsForDate(day.fullDate);
               const isCurrentDay = isToday(day.fullDate);
@@ -224,7 +224,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   
                   <div className="mt-1 space-y-1">
                     {dayEvents.slice(0, 2).map(event => {
-                      const colors = EVENT_COLORS[event.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.project;
+                      const colors = EVENT_COLORS[event.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.internal;
                       return (
                         <div
                           key={event.id}
