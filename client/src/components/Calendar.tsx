@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EventModal from "./EventModal";
 import { EventFilters, type FilterOptions } from "./EventFilters";
+import { EventViewModal } from "./EventViewModal";
 import type { Event } from "@shared/schema";
 
 const DAYS_OF_WEEK = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
@@ -28,6 +29,8 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>({
     internal: true,
     external: true,
@@ -140,10 +143,20 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
     setIsModalOpen(true);
   };
 
+  const handleViewEvent = (event: Event) => {
+    setViewingEvent(event);
+    setIsViewModalOpen(true);
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingEvent(null);
     setSelectedDate(null);
+  };
+
+  const handleCloseViewModal = () => {
+    setIsViewModalOpen(false);
+    setViewingEvent(null);
   };
 
   const days = getDaysInMonth(currentDate);
@@ -327,7 +340,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 return (
                   <div
                     key={event.id}
-                    className={`absolute flex items-center text-xs py-1 px-2 ${isAdmin ? 'cursor-pointer' : 'cursor-default'} ${colors.bg} ${colors.text} rounded z-20 whitespace-nowrap`}
+                    className={`absolute flex items-center text-xs py-1 px-2 cursor-pointer ${colors.bg} ${colors.text} rounded z-20 whitespace-nowrap`}
                     style={{
                       left,
                       width,
@@ -335,9 +348,12 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                       height: '20px'
                     }}
                     onClick={(e) => {
-                      if (!isAdmin) return;
                       e.stopPropagation();
-                      handleEditEvent(event);
+                      if (isAdmin) {
+                        handleEditEvent(event);
+                      } else {
+                        handleViewEvent(event);
+                      }
                     }}
                     data-testid={`event-${event.id}`}
                   >
@@ -360,6 +376,12 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
           isAdmin={isAdmin}
         />
       )}
+      
+      <EventViewModal
+        event={viewingEvent}
+        isOpen={isViewModalOpen}
+        onClose={handleCloseViewModal}
+      />
     </>
   );
 }
