@@ -337,8 +337,8 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 
                 // Расчет позиции с учетом увеличенной высоты
                 const cellWidth = `calc((100% - 24px) / 7)`;
-                const left = `calc(${col} * (${cellWidth} + 4px) + 4px + 12px)`;
-                const width = `calc(${span} * ${cellWidth} + ${(span - 1) * 4}px - 24px)`;
+                const left = `calc(${col} * (${cellWidth} + 4px) + 4px + 4px)`;
+                const width = `calc(${span} * ${cellWidth} + ${(span - 1) * 4}px - 16px)`;
                 const top = `calc(${row} * 180px + 48px + ${layer * 26}px + 4px)`;
                 
                 return (
