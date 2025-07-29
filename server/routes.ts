@@ -5,6 +5,7 @@ import { insertEventSchema, updateEventSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import session from "express-session";
 import MemoryStore from "memorystore";
+import { randomUUID } from "crypto";
 
 // Simple auth credentials
 const USERS = {
@@ -53,22 +54,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup session middleware
   setupSession(app);
 
-  // Login route
-  app.post('/api/auth/login', (req, res) => {
-    const { username, password } = req.body;
-    
-    const user = USERS[username as keyof typeof USERS];
-    if (!user || user.password !== password) {
-      return res.status(401).json({ message: "Неверный логин или пароль" });
+  // Login route - accepts any credentials, admin only for specific login
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(401).json({ message: "Неверный логин или пароль" });
+      }
+      
+      // Admin credentials
+      if (username === 'admincibwest' && password === 'calendarcibwest') {
+        // Get or create admin user
+        let user = await storage.getUserByUsername(username);
+        if (!user) {
+          user = await storage.createUser({
+            id: 'admin',
+            username: 'admincibwest',
+            isAdmin: true
+          });
+        }
+        
+        (req.session as any).user = user;
+        await storage.logUserAction(user.id, 'login');
+        return res.json({ success: true, user });
+      }
+      
+      // Any other credentials create a regular user
+      let user = await storage.getUserByUsername(username);
+      if (!user) {
+        user = await storage.createUser({
+          id: randomUUID(),
+          username,
+          isAdmin: false
+        });
+      }
+      
+      (req.session as any).user = user;
+      await storage.logUserAction(user.id, 'login');
+      return res.json({ success: true, user });
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ message: 'Ошибка сервера' });
     }
-    
-    (req.session as any).user = {
-      id: user.id,
-      username,
-      isAdmin: user.isAdmin
-    };
-    
-    res.json({ success: true, user: { id: user.id, username, isAdmin: user.isAdmin } });
   });
   
   // Logout route
@@ -140,7 +168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: validationError.message });
       }
 
-      const userId = req.user.claims.sub;
+      const userId = (req.session as any).user.id;
       const event = await storage.createEvent(validationResult.data, userId);
       res.status(201).json(event);
     } catch (error) {
@@ -178,6 +206,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting event:", error);
       res.status(500).json({ message: "Failed to delete event" });
+    }
+  });
+
+  // Analytics routes
+  app.post('/api/analytics/event-view', isAuthenticated, async (req, res) => {
+    try {
+      const { eventId } = req.body;
+      const userId = (req.session as any).user.id;
+      
+      await storage.logUserAction(userId, 'event_view', eventId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error logging event view:', error);
+      res.status(500).json({ message: 'Failed to log event view' });
+    }
+  });
+
+  // Get analytics (admin only)
+  app.get('/api/analytics', isAdmin, async (req, res) => {
+    try {
+      const analytics = await storage.getAllAnalytics();
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      res.status(500).json({ message: 'Failed to fetch analytics' });
+    }
+  });
+
+  // Get user analytics (admin only)
+  app.get('/api/analytics/user/:userId', isAdmin, async (req, res) => {
+    try {
+      const analytics = await storage.getUserAnalytics(req.params.userId);
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching user analytics:', error);
+      res.status(500).json({ message: 'Failed to fetch user analytics' });
     }
   });
 

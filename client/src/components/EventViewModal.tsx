@@ -7,6 +7,8 @@ import {
 } from '@/components/ui/dialog';
 import { X, Calendar, Clock, Tag } from 'lucide-react';
 import type { Event } from '@shared/schema';
+import { apiRequest } from '@/lib/queryClient';
+import React from 'react';
 
 interface EventViewModalProps {
   event: Event | null;
@@ -22,6 +24,28 @@ const EVENT_CATEGORIES = {
 
 export function EventViewModal({ event, isOpen, onClose }: EventViewModalProps) {
   if (!event) return null;
+
+  // Log event view when modal opens
+  const logEventView = async () => {
+    if (event && isOpen) {
+      try {
+        await apiRequest('/api/analytics/event-view', {
+          method: 'POST',
+          body: JSON.stringify({ eventId: event.id }),
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error) {
+        console.log('Failed to log event view:', error);
+      }
+    }
+  };
+
+  // Log when modal opens
+  React.useEffect(() => {
+    if (isOpen && event) {
+      logEventView();
+    }
+  }, [isOpen, event]);
 
   const categoryInfo = EVENT_CATEGORIES[event.category as keyof typeof EVENT_CATEGORIES];
   
@@ -47,7 +71,7 @@ export function EventViewModal({ event, isOpen, onClose }: EventViewModalProps) 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby="event-description">
         <DialogHeader className="space-y-4">
           <div className="flex items-start justify-between">
             <DialogTitle className="text-2xl font-bold text-gray-900 pr-8 leading-tight">
@@ -92,7 +116,7 @@ export function EventViewModal({ event, isOpen, onClose }: EventViewModalProps) 
                 <span>Описание</span>
               </h3>
               <div className="bg-gray-50 rounded-lg p-4 border">
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                <p id="event-description" className="text-gray-700 leading-relaxed whitespace-pre-wrap">
                   {event.description}
                 </p>
               </div>
@@ -104,7 +128,7 @@ export function EventViewModal({ event, isOpen, onClose }: EventViewModalProps) 
             <div className="space-y-3">
               <h3 className="text-lg font-semibold text-gray-900">Описание</h3>
               <div className="bg-gray-50 rounded-lg p-4 border">
-                <p className="text-gray-500 italic">
+                <p id="event-description" className="text-gray-500 italic">
                   Описание для этого события не указано.
                 </p>
               </div>

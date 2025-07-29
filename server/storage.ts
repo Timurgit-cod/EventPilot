@@ -1,11 +1,14 @@
 import {
   users,
   events,
+  userAnalytics,
   type User,
-  type UpsertUser,
+  type InsertUser,
   type Event,
   type InsertEvent,
   type UpdateEvent,
+  type UserAnalytic,
+  type InsertUserAnalytic,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, like, asc, or } from "drizzle-orm";
@@ -14,9 +17,9 @@ import { randomUUID } from "crypto";
 // Interface for storage operations
 export interface IStorage {
   // User operations
-  // (IMPORTANT) these user operations are mandatory for Replit Auth.
   getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
   
   // Event operations
@@ -26,53 +29,47 @@ export interface IStorage {
   createEvent(event: InsertEvent, createdBy: string): Promise<Event>;
   updateEvent(id: string, event: UpdateEvent): Promise<Event | undefined>;
   deleteEvent(id: string): Promise<boolean>;
+  
+  // Analytics operations
+  logUserAction(userId: string, action: string, eventId?: string, metadata?: any): Promise<void>;
+  getUserAnalytics(userId: string): Promise<UserAnalytic[]>;
+  getAllAnalytics(): Promise<UserAnalytic[]>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private events: Map<string, Event>;
+  private analytics: Map<string, UserAnalytic>;
 
   constructor() {
     this.users = new Map();
     this.events = new Map();
+    this.analytics = new Map();
   }
 
   // User operations
-  // (IMPORTANT) these user operations are mandatory for Replit Auth.
-
   async getUser(id: string): Promise<User | undefined> {
     return this.users.get(id);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.username === username);
   }
 
   async getAllUsers(): Promise<User[]> {
     return Array.from(this.users.values());
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
-    const existingUser = this.users.get(userData.id!);
-    
-    if (existingUser) {
-      const updatedUser: User = {
-        ...existingUser,
-        ...userData,
-        updatedAt: new Date(),
-      };
-      this.users.set(userData.id!, updatedUser);
-      return updatedUser;
-    } else {
-      const newUser: User = {
-        id: userData.id || randomUUID(),
-        email: userData.email || null,
-        firstName: userData.firstName || null,
-        lastName: userData.lastName || null,
-        profileImageUrl: userData.profileImageUrl || null,
-        isAdmin: userData.isAdmin || false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      this.users.set(newUser.id, newUser);
-      return newUser;
-    }
+  async createUser(userData: InsertUser): Promise<User> {
+    const user: User = {
+      id: userData.id,
+      username: userData.username,
+      isAdmin: userData.isAdmin || false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.users.set(user.id, user);
+    return user;
   }
 
   // Event operations
@@ -135,14 +132,38 @@ export class MemStorage implements IStorage {
   async deleteEvent(id: string): Promise<boolean> {
     return this.events.delete(id);
   }
+
+  // Analytics operations
+  async logUserAction(userId: string, action: string, eventId?: string, metadata?: any): Promise<void> {
+    const analytic: UserAnalytic = {
+      id: randomUUID(),
+      userId,
+      eventId: eventId || null,
+      action,
+      timestamp: new Date(),
+      metadata: metadata || null,
+    };
+    this.analytics.set(analytic.id, analytic);
+  }
+
+  async getUserAnalytics(userId: string): Promise<UserAnalytic[]> {
+    return Array.from(this.analytics.values()).filter(a => a.userId === userId);
+  }
+
+  async getAllAnalytics(): Promise<UserAnalytic[]> {
+    return Array.from(this.analytics.values());
+  }
 }
 
 export class DatabaseStorage implements IStorage {
   // User operations
-  // (IMPORTANT) these user operations are mandatory for Replit Auth.
-
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
     return user || undefined;
   }
 
@@ -150,17 +171,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users);
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
+  async createUser(userData: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
       .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
       .returning();
     return user;
   }
@@ -216,6 +230,24 @@ export class DatabaseStorage implements IStorage {
   async deleteEvent(id: string): Promise<boolean> {
     const result = await db.delete(events).where(eq(events.id, id));
     return (result.rowCount ?? 0) > 0;
+  }
+
+  // Analytics operations
+  async logUserAction(userId: string, action: string, eventId?: string, metadata?: any): Promise<void> {
+    await db.insert(userAnalytics).values({
+      userId,
+      eventId: eventId || null,
+      action,
+      metadata: metadata || null,
+    });
+  }
+
+  async getUserAnalytics(userId: string): Promise<UserAnalytic[]> {
+    return await db.select().from(userAnalytics).where(eq(userAnalytics.userId, userId));
+  }
+
+  async getAllAnalytics(): Promise<UserAnalytic[]> {
+    return await db.select().from(userAnalytics);
   }
 }
 
