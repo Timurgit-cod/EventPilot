@@ -163,8 +163,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
 
   const days = getDaysInMonth(currentDate);
 
-  // Debug log
-  console.log('Calendar isAdmin:', isAdmin, 'isModalOpen:', isModalOpen);
+
 
   return (
     <>
@@ -362,7 +361,6 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                     }}
                     data-testid={`event-${event.id}`}
                   >
-                    <span className={`w-2 h-2 rounded-full inline-block mr-1 flex-shrink-0 ${colors.dot}`}></span>
                     <span className="truncate text-black font-semibold">{event.title}</span>
                   </div>
                 );
