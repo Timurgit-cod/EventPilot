@@ -404,13 +404,8 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   return colIndex >= 5 ? '0.8fr' : '1.2fr';
                 };
                 
-                // Упрощенный подход: используем точные вычисления на основе flex
+                // Точное позиционирование: события должны покрывать всю ячейку
                 const getLeftPosition = (colIndex: number) => {
-                  // Каждая колонка имеет 4px gap справа, кроме последней
-                  // Weekdays: flex-[1.2], weekends: flex-[0.8]
-                  // Общая ширина: 5*1.2 + 2*0.8 = 7.6 частей
-                  // padding ячейки: 12px (p-3)
-                  
                   let position = 0;
                   for (let i = 0; i < colIndex; i++) {
                     const flexValue = i >= 5 ? 0.8 : 1.2;
@@ -418,9 +413,10 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   }
                   
                   const totalFlex = 7.6; // 5*1.2 + 2*0.8
-                  const gaps = colIndex * 4; // gap-1 = 4px
+                  const gaps = colIndex * 4; // gap-1 = 4px между колонками
                   
-                  return `calc(${(position / totalFlex) * 100}% + ${gaps}px + 12px)`;
+                  // Событие начинается от левого края ячейки (без дополнительных отступов)
+                  return `calc(${(position / totalFlex) * 100}% + ${gaps}px)`;
                 };
                 
                 const getWidth = (colIndex: number, spanCount: number) => {
@@ -430,9 +426,10 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   }
                   
                   const totalFlexBase = 7.6;
-                  const gaps = (spanCount - 1) * 4; // промежуточные gaps
+                  const gaps = (spanCount - 1) * 4; // промежуточные gaps между ячейками
                   
-                  return `calc(${(totalFlex / totalFlexBase) * 100}% + ${gaps}px - 24px)`;
+                  // Событие занимает всю ширину ячейки/ячеек
+                  return `calc(${(totalFlex / totalFlexBase) * 100}% + ${gaps}px)`;
                 };
                 
                 const left = getLeftPosition(col);
@@ -442,12 +439,13 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 return (
                   <div
                     key={event.id}
-                    className={`absolute flex items-center text-sm py-1 px-2 cursor-pointer ${colors.bg} rounded z-20 whitespace-nowrap`}
+                    className={`absolute flex items-center text-sm py-1 cursor-pointer ${colors.bg} rounded z-20 whitespace-nowrap`}
                     style={{
                       left,
                       width,
                       top,
-                      height: '22px'
+                      height: '22px',
+                      margin: '0 12px' // добавляем внутренний отступ для визуального улучшения
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -459,7 +457,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                     }}
                     data-testid={`event-${event.id}`}
                   >
-                    <span className="truncate text-black font-semibold">{event.title}</span>
+                    <span className="truncate text-black font-semibold px-2">{event.title}</span>
                   </div>
                 );
               });
