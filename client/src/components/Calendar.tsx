@@ -437,7 +437,8 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   
                   // Дополнительное сокращение для разных дней
                   let widthCorrection = 4; // базовая коррекция
-                  if (colIndex === 1 || colIndex === 2) widthCorrection = 8; // вторник и среда уже на 4px справа
+                  if (colIndex === 0) widthCorrection = 16; // понедельник: сократить на 12px справа
+                  else if (colIndex === 1 || colIndex === 2) widthCorrection = 8; // вторник и среда уже на 4px справа
                   else if (colIndex === 3) widthCorrection = 16; // четверг: сократить на 6px с каждой стороны = 12px дополнительно
                   else if (colIndex === 4) widthCorrection = 8; // пятница: сократить на 2px с каждой стороны = 4px дополнительно
                   
