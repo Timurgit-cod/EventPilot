@@ -419,7 +419,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   let correction = 0;
                   if (colIndex === 1) correction = 24; // вторник левее на 24px
                   else if (colIndex === 2) correction = 36; // среда левее на 36px (дополнительно 4px слева)
-                  else if (colIndex === 3) correction = 50; // четверг левее на 50px (дополнительно 4px слева)
+                  else if (colIndex === 3) correction = 38; // четверг левее на 38px (сдвиг на 12px вправо)
                   else if (colIndex === 4) correction = 54; // пятница левее на 54px (сдвиг на 6px вправо от предыдущего)
                   
                   return `calc(${(position / totalFlex) * 100}% + ${gaps - correction}px + 2px)`;
