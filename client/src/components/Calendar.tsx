@@ -410,7 +410,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                     position += i >= 5 ? 0.8 : 1.2;
                   }
                   const totalWidth = 5 * 1.2 + 2 * 0.8; // 7.6
-                  return `calc(${(position / totalWidth) * 100}% + ${colIndex * 4}px)`;
+                  return `calc(${(position / totalWidth) * 100}% + ${colIndex * 4}px - 8px)`;
                 };
                 
                 const getWidth = (colIndex: number, spanCount: number) => {
