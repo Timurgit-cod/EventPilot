@@ -96,12 +96,6 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               {isLoading ? 'Вход...' : 'Войти'}
             </Button>
           </form>
-          
-          <div className="mt-6 text-sm text-gray-500 space-y-1">
-            <p className="font-medium">Тестовые учетные данные:</p>
-            <p>Администратор: admincibwest / calendarcibwest</p>
-            <p>Пользователь: user / 12345test</p>
-          </div>
         </CardContent>
       </Card>
     </div>
