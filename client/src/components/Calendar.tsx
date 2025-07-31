@@ -37,9 +37,31 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
     foreign: true,
   });
 
-  const { data: events = [], isLoading } = useQuery<Event[]>({
-    queryKey: ['/api/events', currentDate.getFullYear(), currentDate.getMonth() + 1],
+  // Загружаем события для всех видимых месяцев на календаре
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth() + 1;
+  const prevMonth = month === 1 ? 12 : month - 1;
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const prevYear = month === 1 ? year - 1 : year;
+  const nextYear = month === 12 ? year + 1 : year;
+
+  const { data: currentMonthEvents = [] } = useQuery<Event[]>({
+    queryKey: ['/api/events', year, month],
   });
+
+  const { data: prevMonthEvents = [] } = useQuery<Event[]>({
+    queryKey: ['/api/events', prevYear, prevMonth], 
+  });
+
+  const { data: nextMonthEvents = [] } = useQuery<Event[]>({
+    queryKey: ['/api/events', nextYear, nextMonth],
+  });
+
+  // Объединяем все события и удаляем дубликаты по ID
+  const allEvents = [...currentMonthEvents, ...prevMonthEvents, ...nextMonthEvents];
+  const events = Array.from(
+    new Map(allEvents.map(event => [event.id, event])).values()
+  );
 
 
 
