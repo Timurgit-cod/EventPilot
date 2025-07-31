@@ -415,10 +415,10 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   const totalFlex = 5.66; // 5*1 + 2*0.33
                   const gaps = colIndex * 4; // gap-1 = 4px между колонками
                   
-                  // Корректировка для вторника (colIndex === 1)
+                  // Корректировка для вторника (colIndex === 1) + общий сдвиг вправо
                   const correction = colIndex === 1 ? 24 : 0; // сдвигаем вторник левее на 24px
                   
-                  return `calc(${(position / totalFlex) * 100}% + ${gaps - correction}px)`;
+                  return `calc(${(position / totalFlex) * 100}% + ${gaps - correction}px + 12px)`;
                 };
                 
                 const getWidth = (colIndex: number, spanCount: number) => {
@@ -430,7 +430,8 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   const totalFlexBase = 5.66; // 5*1 + 2*0.33
                   const gaps = (spanCount - 1) * 4; // промежуточные gaps
                   
-                  return `calc(${(totalFlex / totalFlexBase) * 100}% + ${gaps}px)`;
+                  // Сокращаем блоки на 12px с каждой стороны (24px общее сокращение)
+                  return `calc(${(totalFlex / totalFlexBase) * 100}% + ${gaps}px - 24px)`;
                 };
                 
                 const left = getLeftPosition(col);
