@@ -410,7 +410,8 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                     position += i >= 5 ? 0.8 : 1.2;
                   }
                   const totalWidth = 5 * 1.2 + 2 * 0.8; // 7.6
-                  return `calc(${(position / totalWidth) * 100}% + ${colIndex * 4}px - 8px)`;
+                  // Учитываем отступ padding внутри ячеек (12px с каждой стороны)
+                  return `calc(${(position / totalWidth) * 100}% + ${colIndex * 4}px + 12px)`;
                 };
                 
                 const getWidth = (colIndex: number, spanCount: number) => {
@@ -419,7 +420,8 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                     totalSpanWidth += i >= 5 ? 0.8 : 1.2;
                   }
                   const totalWidth = 5 * 1.2 + 2 * 0.8; // 7.6
-                  return `calc(${(totalSpanWidth / totalWidth) * 100}% + ${(spanCount - 1) * 4}px - 8px)`;
+                  // Учитываем padding ячеек (24px всего - по 12px с каждой стороны)
+                  return `calc(${(totalSpanWidth / totalWidth) * 100}% + ${(spanCount - 1) * 4}px - 24px)`;
                 };
                 
                 const left = getLeftPosition(col);
