@@ -417,7 +417,8 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   
                   // Корректировка для всех дней + небольшой сдвиг вправо
                   let correction = 0;
-                  if (colIndex === 1) correction = 24; // вторник левее на 24px
+                  if (colIndex === 0) correction = 12; // понедельник левее на 12px
+                  else if (colIndex === 1) correction = 24; // вторник левее на 24px
                   else if (colIndex === 2) correction = 36; // среда левее на 36px (дополнительно 4px слева)
                   else if (colIndex === 3) correction = 42; // четверг левее на 42px (сдвиг на 4px влево)
                   else if (colIndex === 4) correction = 54; // пятница левее на 54px (сдвиг на 6px вправо от предыдущего)
