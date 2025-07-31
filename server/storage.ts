@@ -134,6 +134,14 @@ export class MemStorage implements IStorage {
   }
 
   async deleteEvent(id: string): Promise<boolean> {
+    // Сначала удаляем все связанные записи из аналитики
+    const analyticsToDelete = Array.from(this.analytics.entries())
+      .filter(([_, analytic]) => analytic.eventId === id)
+      .map(([key, _]) => key);
+    
+    analyticsToDelete.forEach(key => this.analytics.delete(key));
+    
+    // Затем удаляем само событие
     return this.events.delete(id);
   }
 
@@ -235,8 +243,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteEvent(id: string): Promise<boolean> {
-    const result = await db.delete(events).where(eq(events.id, id));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      // Сначала удаляем все связанные записи из user_analytics
+      await db.delete(userAnalytics).where(eq(userAnalytics.eventId, id));
+      
+      // Затем удаляем само событие
+      const result = await db.delete(events).where(eq(events.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      throw error;
+    }
   }
 
   // Analytics operations
