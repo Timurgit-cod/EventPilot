@@ -135,20 +135,7 @@ export function EventViewModal({ event, isOpen, onClose }: EventViewModalProps) 
             </div>
           )}
           
-          {/* Additional event details */}
-          <div className="border-t pt-4 space-y-2">
-            <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-              Дополнительная информация
-            </h4>
-            <div className="grid grid-cols-1 gap-2 text-sm text-gray-600">
-              <div className="flex justify-between">
-                <span>ID события:</span>
-                <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-                  {event.id}
-                </span>
-              </div>
-            </div>
-          </div>
+
         </div>
         
         {/* Footer */}
