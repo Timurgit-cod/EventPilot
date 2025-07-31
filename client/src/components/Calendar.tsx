@@ -404,8 +404,13 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   return colIndex >= 5 ? '0.8fr' : '1.2fr';
                 };
                 
-                // Точное позиционирование: события должны покрывать всю ячейку
+                // Точное позиционирование: корректировка для всех колонок кроме понедельника
                 const getLeftPosition = (colIndex: number) => {
+                  if (colIndex === 0) {
+                    // Понедельник правильно
+                    return `calc(${(0 / 7.6) * 100}% + 0px)`;
+                  }
+                  
                   let position = 0;
                   for (let i = 0; i < colIndex; i++) {
                     const flexValue = i >= 5 ? 0.8 : 1.2;
@@ -415,8 +420,9 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   const totalFlex = 7.6; // 5*1.2 + 2*0.8
                   const gaps = colIndex * 4; // gap-1 = 4px между колонками
                   
-                  // Событие начинается от левого края ячейки (без дополнительных отступов)
-                  return `calc(${(position / totalFlex) * 100}% + ${gaps}px)`;
+                  // Корректировка для колонок 1-6: сдвигаем левее
+                  const correction = colIndex * 3; // уменьшаем отступ на 3px за каждую колонку
+                  return `calc(${(position / totalFlex) * 100}% + ${gaps - correction}px)`;
                 };
                 
                 const getWidth = (colIndex: number, spanCount: number) => {
@@ -428,8 +434,9 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   const totalFlexBase = 7.6;
                   const gaps = (spanCount - 1) * 4; // промежуточные gaps между ячейками
                   
-                  // Событие занимает всю ширину ячейки/ячеек
-                  return `calc(${(totalFlex / totalFlexBase) * 100}% + ${gaps}px)`;
+                  // Делаем блоки немного уже для лучшего совпадения
+                  const widthCorrection = colIndex === 0 ? 0 : spanCount * 2; // уменьшаем ширину для колонок 1-6
+                  return `calc(${(totalFlex / totalFlexBase) * 100}% + ${gaps}px - ${widthCorrection}px)`;
                 };
                 
                 const left = getLeftPosition(col);
