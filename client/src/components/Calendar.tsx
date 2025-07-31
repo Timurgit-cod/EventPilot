@@ -237,7 +237,9 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
             {DAYS_OF_WEEK.map((day, index) => (
               <div 
                 key={day} 
-                className="p-3 text-center text-sm font-semibold text-gray-600 bg-gray-50 flex-1"
+                className={`p-3 text-center text-sm font-semibold text-gray-600 bg-gray-50 ${
+                  index >= 5 ? 'flex-[0.33]' : 'flex-1'
+                }`}
               >
                 {day}
               </div>
@@ -258,10 +260,11 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                       <div
                         key={index}
                         className={`
-                          bg-white min-h-[180px] p-3 relative transition-all flex-1
+                          bg-white min-h-[180px] p-3 relative transition-all
                           ${isAdmin ? 'cursor-pointer hover:bg-gray-50' : ''}
                           ${isCurrentDay ? 'bg-blue-50 border-2 border-blue-200' : ''}
                           ${selectedDate === dateStr ? 'ring-2 ring-blue-300' : ''}
+                          ${dayIndex >= 5 ? 'flex-[0.33]' : 'flex-1'}
                         `}
                         onClick={() => {
                           if (!isAdmin) return;
@@ -398,20 +401,33 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 
                 // Расчет позиции с учетом переменной ширины колонок
                 const getColumnWidth = (colIndex: number) => {
-                  return '1fr'; // все колонки одинаковые
+                  return colIndex >= 5 ? '0.33fr' : '1fr';
                 };
                 
-                // Простое позиционирование: все колонки одинаковые
+                // Позиционирование: будни = 1fr, выходные = 0.33fr
                 const getLeftPosition = (colIndex: number) => {
-                  // Каждая колонка занимает 1/7 ширины + gaps
+                  // Будни: 5 * 1 = 5, выходные: 2 * 0.33 = 0.66, всего: 5.66 частей
+                  let position = 0;
+                  for (let i = 0; i < colIndex; i++) {
+                    position += i >= 5 ? 0.33 : 1;
+                  }
+                  
+                  const totalFlex = 5.66; // 5*1 + 2*0.33
                   const gaps = colIndex * 4; // gap-1 = 4px между колонками
-                  return `calc(${(colIndex / 7) * 100}% + ${gaps}px)`;
+                  
+                  return `calc(${(position / totalFlex) * 100}% + ${gaps}px)`;
                 };
                 
                 const getWidth = (colIndex: number, spanCount: number) => {
-                  // Ширина зависит от количества охватываемых колонок
+                  let totalFlex = 0;
+                  for (let i = colIndex; i < Math.min(colIndex + spanCount, 7); i++) {
+                    totalFlex += i >= 5 ? 0.33 : 1;
+                  }
+                  
+                  const totalFlexBase = 5.66; // 5*1 + 2*0.33
                   const gaps = (spanCount - 1) * 4; // промежуточные gaps
-                  return `calc(${(spanCount / 7) * 100}% + ${gaps}px)`;
+                  
+                  return `calc(${(totalFlex / totalFlexBase) * 100}% + ${gaps}px)`;
                 };
                 
                 const left = getLeftPosition(col);
