@@ -430,8 +430,10 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   const totalFlexBase = 5.66; // 5*1 + 2*0.33
                   const gaps = (spanCount - 1) * 4; // промежуточные gaps
                   
-                  // Сокращаем блоки на 2px с каждой стороны (4px общее сокращение)
-                  return `calc(${(totalFlex / totalFlexBase) * 100}% + ${gaps}px - 4px)`;
+                  // Дополнительное сокращение для вторника и среды справа
+                  const widthCorrection = (colIndex === 1 || colIndex === 2) ? 8 : 4; // вторник и среда уже на 4px справа
+                  
+                  return `calc(${(totalFlex / totalFlexBase) * 100}% + ${gaps}px - ${widthCorrection}px)`;
                 };
                 
                 const left = getLeftPosition(col);
