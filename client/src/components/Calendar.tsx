@@ -419,8 +419,8 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   let correction = 0;
                   if (colIndex === 1) correction = 24; // вторник левее на 24px
                   else if (colIndex === 2) correction = 36; // среда левее на 36px (дополнительно 4px слева)
-                  else if (colIndex === 3) correction = 46; // четверг левее на 46px (дополнительно 10px влево)
-                  else if (colIndex === 4) correction = 60; // пятница левее на 60px (дополнительно 12px влево)
+                  else if (colIndex === 3) correction = 50; // четверг левее на 50px (дополнительно 4px слева)
+                  else if (colIndex === 4) correction = 54; // пятница левее на 54px (сдвиг на 6px вправо от предыдущего)
                   
                   return `calc(${(position / totalFlex) * 100}% + ${gaps - correction}px + 2px)`;
                 };
@@ -437,7 +437,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   // Дополнительное сокращение для разных дней
                   let widthCorrection = 4; // базовая коррекция
                   if (colIndex === 1 || colIndex === 2) widthCorrection = 8; // вторник и среда уже на 4px справа
-                  else if (colIndex === 3) widthCorrection = 8; // четверг: сократить на 2px с каждой стороны = 4px дополнительно
+                  else if (colIndex === 3) widthCorrection = 16; // четверг: сократить на 6px с каждой стороны = 12px дополнительно
                   else if (colIndex === 4) widthCorrection = 8; // пятница: сократить на 2px с каждой стороны = 4px дополнительно
                   
                   return `calc(${(totalFlex / totalFlexBase) * 100}% + ${gaps}px - ${widthCorrection}px)`;
