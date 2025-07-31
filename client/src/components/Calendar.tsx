@@ -415,7 +415,10 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   const totalFlex = 5.66; // 5*1 + 2*0.33
                   const gaps = colIndex * 4; // gap-1 = 4px между колонками
                   
-                  return `calc(${(position / totalFlex) * 100}% + ${gaps}px)`;
+                  // Корректировка для вторника (colIndex === 1)
+                  const correction = colIndex === 1 ? 8 : 0; // сдвигаем вторник левее на 8px
+                  
+                  return `calc(${(position / totalFlex) * 100}% + ${gaps - correction}px)`;
                 };
                 
                 const getWidth = (colIndex: number, spanCount: number) => {
