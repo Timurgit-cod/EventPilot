@@ -450,10 +450,14 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 const width = getWidth(col, span);
                 const top = `calc(${row} * 180px + 48px + ${layer * 26}px + 4px)`;
                 
+                // Определяем выравнивание текста - по центру для больших блоков
+                const isWideEvent = span >= 5; // события на 5+ дней считаем широкими
+                const textAlignment = isWideEvent ? 'justify-center' : 'justify-start';
+                
                 return (
                   <div
                     key={event.id}
-                    className={`absolute flex items-center text-sm py-1 cursor-pointer ${colors.bg} rounded z-20 whitespace-nowrap`}
+                    className={`absolute flex items-center ${textAlignment} text-sm py-1 cursor-pointer ${colors.bg} rounded z-20 whitespace-nowrap`}
                     style={{
                       left,
                       width,
