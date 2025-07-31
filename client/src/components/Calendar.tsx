@@ -237,9 +237,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
             {DAYS_OF_WEEK.map((day, index) => (
               <div 
                 key={day} 
-                className={`p-3 text-center text-sm font-semibold text-gray-600 bg-gray-50 ${
-                  index >= 5 ? 'flex-[0.8]' : 'flex-[1.2]'
-                }`}
+                className="p-3 text-center text-sm font-semibold text-gray-600 bg-gray-50 flex-1"
               >
                 {day}
               </div>
@@ -260,11 +258,10 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                       <div
                         key={index}
                         className={`
-                          bg-white min-h-[180px] p-3 relative transition-all
+                          bg-white min-h-[180px] p-3 relative transition-all flex-1
                           ${isAdmin ? 'cursor-pointer hover:bg-gray-50' : ''}
                           ${isCurrentDay ? 'bg-blue-50 border-2 border-blue-200' : ''}
                           ${selectedDate === dateStr ? 'ring-2 ring-blue-300' : ''}
-                          ${dayIndex >= 5 ? 'flex-[0.8]' : 'flex-[1.2]'}
                         `}
                         onClick={() => {
                           if (!isAdmin) return;
@@ -401,42 +398,20 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 
                 // Расчет позиции с учетом переменной ширины колонок
                 const getColumnWidth = (colIndex: number) => {
-                  return colIndex >= 5 ? '0.8fr' : '1.2fr';
+                  return '1fr'; // все колонки одинаковые
                 };
                 
-                // Точное позиционирование: корректировка для всех колонок кроме понедельника
+                // Простое позиционирование: все колонки одинаковые
                 const getLeftPosition = (colIndex: number) => {
-                  if (colIndex === 0) {
-                    // Понедельник правильно
-                    return `calc(${(0 / 7.6) * 100}% + 0px)`;
-                  }
-                  
-                  let position = 0;
-                  for (let i = 0; i < colIndex; i++) {
-                    const flexValue = i >= 5 ? 0.8 : 1.2;
-                    position += flexValue;
-                  }
-                  
-                  const totalFlex = 7.6; // 5*1.2 + 2*0.8
+                  // Каждая колонка занимает 1/7 ширины + gaps
                   const gaps = colIndex * 4; // gap-1 = 4px между колонками
-                  
-                  // Корректировка для колонок 1-6: сдвигаем левее
-                  const correction = colIndex * 3; // уменьшаем отступ на 3px за каждую колонку
-                  return `calc(${(position / totalFlex) * 100}% + ${gaps - correction}px)`;
+                  return `calc(${(colIndex / 7) * 100}% + ${gaps}px)`;
                 };
                 
                 const getWidth = (colIndex: number, spanCount: number) => {
-                  let totalFlex = 0;
-                  for (let i = colIndex; i < Math.min(colIndex + spanCount, 7); i++) {
-                    totalFlex += i >= 5 ? 0.8 : 1.2;
-                  }
-                  
-                  const totalFlexBase = 7.6;
-                  const gaps = (spanCount - 1) * 4; // промежуточные gaps между ячейками
-                  
-                  // Делаем блоки немного уже для лучшего совпадения
-                  const widthCorrection = colIndex === 0 ? 0 : spanCount * 2; // уменьшаем ширину для колонок 1-6
-                  return `calc(${(totalFlex / totalFlexBase) * 100}% + ${gaps}px - ${widthCorrection}px)`;
+                  // Ширина зависит от количества охватываемых колонок
+                  const gaps = (spanCount - 1) * 4; // промежуточные gaps
+                  return `calc(${(spanCount / 7) * 100}% + ${gaps}px)`;
                 };
                 
                 const left = getLeftPosition(col);
