@@ -11,7 +11,7 @@ import {
   type InsertUserAnalytic,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, like, asc, or } from "drizzle-orm";
+import { eq, like, asc, or, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 // Interface for storage operations
@@ -80,13 +80,17 @@ export class MemStorage implements IStorage {
   }
 
   async getEventsByMonth(year: number, month: number): Promise<Event[]> {
-    const monthStr = month.toString().padStart(2, '0');
-    const yearStr = year.toString();
+    // Определяем границы месяца
+    const monthStart = `${year}-${month.toString().padStart(2, '0')}-01`;
+    const nextMonth = month === 12 ? 1 : month + 1;
+    const nextYear = month === 12 ? year + 1 : year;
+    const monthEnd = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01`;
     
     return Array.from(this.events.values())
       .filter(event => 
-        event.startDate.startsWith(`${yearStr}-${monthStr}`) ||
-        event.endDate.startsWith(`${yearStr}-${monthStr}`)
+        // Событие пересекается с месяцем, если:
+        // startDate < monthEnd AND endDate >= monthStart
+        event.startDate < monthEnd && event.endDate >= monthStart
       )
       .sort((a, b) => 
         new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
@@ -185,17 +189,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEventsByMonth(year: number, month: number): Promise<Event[]> {
-    const monthStr = month.toString().padStart(2, '0');
-    const yearStr = year.toString();
-    const datePattern = `${yearStr}-${monthStr}%`;
+    // Определяем границы месяца
+    const monthStart = `${year}-${month.toString().padStart(2, '0')}-01`;
+    const nextMonth = month === 12 ? 1 : month + 1;
+    const nextYear = month === 12 ? year + 1 : year;
+    const monthEnd = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01`;
     
     return await db
       .select()
       .from(events)
-      .where(or(
-        like(events.startDate, datePattern),
-        like(events.endDate, datePattern)
-      ))
+      .where(
+        // Событие пересекается с месяцем, если:
+        // startDate < monthEnd AND endDate >= monthStart
+        sql`${events.startDate} < ${monthEnd} AND ${events.endDate} >= ${monthStart}`
+      )
       .orderBy(asc(events.startDate));
   }
 
