@@ -1,6 +1,70 @@
-node_modules
-dist
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+server/public/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# System files
 .DS_Store
-server/public
-vite.config.ts.*
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Compressed files
 *.tar.gz
+*.zip
+*.rar
+
+# Replit specific
+.replit
+replit.nix
+
+# Build cache
+.cache/
+vite.config.ts.*
+
+# Test coverage
+coverage/
