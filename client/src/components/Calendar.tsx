@@ -404,47 +404,35 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   return colIndex >= 5 ? '0.8fr' : '1.2fr';
                 };
                 
-                // Простой подход: используем CSS Grid колонки напрямую
+                // Упрощенный подход: используем точные вычисления на основе flex
                 const getLeftPosition = (colIndex: number) => {
-                  // Вычисляем точную позицию на основе колонок grid
-                  const weekdayWidth = `calc((100% - 28px) * 1.2 / 7.6)`; // 1.2 части из 7.6 общих
-                  const weekendWidth = `calc((100% - 28px) * 0.8 / 7.6)`; // 0.8 части из 7.6 общих
+                  // Каждая колонка имеет 4px gap справа, кроме последней
+                  // Weekdays: flex-[1.2], weekends: flex-[0.8]
+                  // Общая ширина: 5*1.2 + 2*0.8 = 7.6 частей
+                  // padding ячейки: 12px (p-3)
                   
-                  if (colIndex === 0) return '12px'; // первая колонка + padding
-                  if (colIndex === 1) return `calc(${weekdayWidth} + 16px)`;
-                  if (colIndex === 2) return `calc(${weekdayWidth} * 2 + 20px)`;
-                  if (colIndex === 3) return `calc(${weekdayWidth} * 3 + 24px)`;
-                  if (colIndex === 4) return `calc(${weekdayWidth} * 4 + 28px)`;
-                  if (colIndex === 5) return `calc(${weekdayWidth} * 5 + 32px)`;
-                  if (colIndex === 6) return `calc(${weekdayWidth} * 5 + ${weekendWidth} + 36px)`;
-                  return '12px';
+                  let position = 0;
+                  for (let i = 0; i < colIndex; i++) {
+                    const flexValue = i >= 5 ? 0.8 : 1.2;
+                    position += flexValue;
+                  }
+                  
+                  const totalFlex = 7.6; // 5*1.2 + 2*0.8
+                  const gaps = colIndex * 4; // gap-1 = 4px
+                  
+                  return `calc(${(position / totalFlex) * 100}% + ${gaps}px + 12px)`;
                 };
                 
                 const getWidth = (colIndex: number, spanCount: number) => {
-                  const weekdayWidth = `calc((100% - 28px) * 1.2 / 7.6)`;
-                  const weekendWidth = `calc((100% - 28px) * 0.8 / 7.6)`;
-                  
-                  if (spanCount === 1) {
-                    return colIndex >= 5 ? `calc(${weekendWidth} - 24px)` : `calc(${weekdayWidth} - 24px)`;
-                  }
-                  
-                  // Для многодневных событий
-                  let widthCalc = '';
-                  let weekdayCount = 0;
-                  let weekendCount = 0;
-                  
+                  let totalFlex = 0;
                   for (let i = colIndex; i < Math.min(colIndex + spanCount, 7); i++) {
-                    if (i >= 5) weekendCount++;
-                    else weekdayCount++;
+                    totalFlex += i >= 5 ? 0.8 : 1.2;
                   }
                   
-                  if (weekdayCount > 0 && weekendCount > 0) {
-                    return `calc(${weekdayWidth} * ${weekdayCount} + ${weekendWidth} * ${weekendCount} + ${(spanCount - 1) * 4}px - 24px)`;
-                  } else if (weekdayCount > 0) {
-                    return `calc(${weekdayWidth} * ${weekdayCount} + ${(spanCount - 1) * 4}px - 24px)`;
-                  } else {
-                    return `calc(${weekendWidth} * ${weekendCount} + ${(spanCount - 1) * 4}px - 24px)`;
-                  }
+                  const totalFlexBase = 7.6;
+                  const gaps = (spanCount - 1) * 4; // промежуточные gaps
+                  
+                  return `calc(${(totalFlex / totalFlexBase) * 100}% + ${gaps}px - 24px)`;
                 };
                 
                 const left = getLeftPosition(col);
