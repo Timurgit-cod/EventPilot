@@ -431,7 +431,8 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 const getWidth = (spanCount: number) => {
                   const columnWidthPercent = 100 / 7;
                   const gapWidth = 4;
-                  return `calc(${spanCount * columnWidthPercent}% + ${(spanCount - 1) * gapWidth}px - 12px)`;
+                  // Увеличиваем ширину на 10% чтобы блоки соответствовали сетке
+                  return `calc((${spanCount * columnWidthPercent}% + ${(spanCount - 1) * gapWidth}px - 12px) * 1.1)`;
                 };
                 
                 const left = getLeftPosition(col);
