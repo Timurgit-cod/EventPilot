@@ -421,48 +421,21 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
               return eventsWithPositions.map(({ event, row, col, span, layer }) => {
                 const colors = EVENT_COLORS[event.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.internal;
                 
-                // Расчет позиции с учетом переменной ширины колонок
-                const getColumnWidth = (colIndex: number) => {
-                  return colIndex >= 5 ? '0.33fr' : '1fr';
-                };
-                
-                // Позиционирование: будни = 1fr, выходные = 0.33fr
+                // Упрощенное позиционирование - все колонки одинакового размера
                 const getLeftPosition = (colIndex: number) => {
-                  // Будни: 5 * 1 = 5, выходные: 2 * 0.33 = 0.66, всего: 5.66 частей
-                  let position = 0;
-                  for (let i = 0; i < colIndex; i++) {
-                    position += i >= 5 ? 0.33 : 1;
-                  }
-                  
-                  const totalFlex = 5.66; // 5*1 + 2*0.33
-                  const gaps = colIndex * 4; // gap-1 = 4px между колонками
-                  
-                  // Корректировка для всех дней + небольшой сдвиг вправо
-                  let correction = 0;
-                  if (colIndex === 0) correction = 12; // понедельник левее на 12px
-                  else if (colIndex === 1) correction = 24; // вторник левее на 24px
-                  else if (colIndex === 2) correction = 36; // среда левее на 36px (дополнительно 4px слева)
-                  else if (colIndex === 3) correction = 42; // четверг левее на 42px (сдвиг на 4px влево)
-                  else if (colIndex === 4) correction = 54; // пятница левее на 54px (сдвиг на 6px вправо от предыдущего)
-                  
-                  return `calc(${(position / totalFlex) * 100}% + ${gaps - correction}px + 2px)`;
+                  const columnWidthPercent = 100 / 7; // каждая колонка занимает 1/7 ширины
+                  const gapWidth = 4; // gap-1 = 4px
+                  return `calc(${colIndex * columnWidthPercent}% + ${colIndex * gapWidth}px + 12px)`;
                 };
                 
-                const getWidth = (spanCount: number, eventTitle: string) => {
+                const getWidth = (spanCount: number) => {
                   const columnWidthPercent = 100 / 7;
                   const gapWidth = 4;
-                  let widthCorrection = 12; // базовая коррекция
-                  
-                  // Для событий, начинающихся с "#АГРО", увеличиваем коррекцию на 20px
-                  if (eventTitle && typeof eventTitle === 'string' && eventTitle.startsWith('#АГРО')) {
-                    widthCorrection = 32; // 12 + 20 = 32px
-                  }
-                  
-                  return `calc(${spanCount * columnWidthPercent}% + ${(spanCount - 1) * gapWidth}px - ${widthCorrection}px)`;
+                  return `calc(${spanCount * columnWidthPercent}% + ${(spanCount - 1) * gapWidth}px - 12px)`;
                 };
                 
                 const left = getLeftPosition(col);
-                const width = getWidth(span, event.title);
+                const width = getWidth(span);
                 const top = `calc(${row} * 180px + 48px + ${layer * 26}px + 4px)`;
                 
                 // Определяем выравнивание текста - по центру для больших блоков
