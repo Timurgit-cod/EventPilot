@@ -448,28 +448,21 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   return `calc(${(position / totalFlex) * 100}% + ${gaps - correction}px + 2px)`;
                 };
                 
-                const getWidth = (colIndex: number, spanCount: number) => {
-                  let totalFlex = 0;
-                  for (let i = colIndex; i < Math.min(colIndex + spanCount, 7); i++) {
-                    totalFlex += i >= 5 ? 0.33 : 1;
+                const getWidth = (spanCount: number, eventTitle: string) => {
+                  const columnWidthPercent = 100 / 7;
+                  const gapWidth = 4;
+                  let widthCorrection = 12; // базовая коррекция
+                  
+                  // Для событий, начинающихся с "#АГРО", увеличиваем коррекцию на 20px
+                  if (eventTitle && typeof eventTitle === 'string' && eventTitle.startsWith('#АГРО')) {
+                    widthCorrection = 32; // 12 + 20 = 32px
                   }
                   
-                  const totalFlexBase = 5.66; // 5*1 + 2*0.33
-                  const gaps = (spanCount - 1) * 4; // промежуточные gaps
-                  
-                  // Дополнительное сокращение для разных дней
-                  let widthCorrection = 4; // базовая коррекция
-                  if (colIndex === 0) widthCorrection = 16; // понедельник: сократить на 12px справа
-                  else if (colIndex === 1) widthCorrection = 12; // вторник: сократить на 8px справа (4+4)
-                  else if (colIndex === 2) widthCorrection = 8; // среда уже на 4px справа
-                  else if (colIndex === 3) widthCorrection = 16; // четверг: сократить на 6px с каждой стороны = 12px дополнительно
-                  else if (colIndex === 4) widthCorrection = 8; // пятница: сократить на 2px с каждой стороны = 4px дополнительно
-                  
-                  return `calc(${(totalFlex / totalFlexBase) * 100}% + ${gaps}px - ${widthCorrection}px)`;
+                  return `calc(${spanCount * columnWidthPercent}% + ${(spanCount - 1) * gapWidth}px - ${widthCorrection}px)`;
                 };
                 
                 const left = getLeftPosition(col);
-                const width = getWidth(col, span);
+                const width = getWidth(span, event.title);
                 const top = `calc(${row} * 180px + 48px + ${layer * 26}px + 4px)`;
                 
                 // Определяем выравнивание текста - по центру для больших блоков
