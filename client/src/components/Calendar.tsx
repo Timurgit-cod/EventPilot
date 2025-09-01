@@ -472,9 +472,9 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 const width = getWidth(span, col);
                 const top = `calc(${row} * 180px + 48px + ${layer * 26}px + 4px)`;
                 
-                // Определяем выравнивание текста - по центру для больших блоков
-                const isWideEvent = span >= 5; // события на 5+ дней считаем широкими
-                const textAlignment = isWideEvent ? 'justify-center' : 'justify-start';
+                // Определяем выравнивание текста - по центру для 2-дневных, 3-дневных и больших блоков
+                const isCenteredEvent = span >= 2; // события на 2+ дня выравниваем по центру
+                const textAlignment = isCenteredEvent ? 'justify-center' : 'justify-start';
                 
                 return (
                   <div
