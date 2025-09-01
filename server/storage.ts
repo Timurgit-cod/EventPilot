@@ -20,6 +20,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  upsertUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
   
   // Event operations
@@ -63,13 +64,32 @@ export class MemStorage implements IStorage {
   async createUser(userData: InsertUser): Promise<User> {
     const user: User = {
       id: userData.id,
-      username: userData.username,
+      username: userData.username || null,
+      email: userData.email || null,
+      firstName: userData.firstName || null,
+      lastName: userData.lastName || null,
+      profileImageUrl: userData.profileImageUrl || null,
       isAdmin: userData.isAdmin || false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
     this.users.set(user.id, user);
     return user;
+  }
+
+  async upsertUser(userData: InsertUser): Promise<User> {
+    const existingUser = this.users.get(userData.id);
+    if (existingUser) {
+      const updatedUser: User = {
+        ...existingUser,
+        ...userData,
+        updatedAt: new Date(),
+      };
+      this.users.set(userData.id, updatedUser);
+      return updatedUser;
+    } else {
+      return await this.createUser(userData);
+    }
   }
 
   // Event operations
@@ -191,6 +211,23 @@ export class DatabaseStorage implements IStorage {
       .values(userData)
       .returning();
     return user;
+  }
+
+  async upsertUser(userData: InsertUser): Promise<User> {
+    const existingUser = await this.getUser(userData.id);
+    if (existingUser) {
+      const [user] = await db
+        .update(users)
+        .set({
+          ...userData,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userData.id))
+        .returning();
+      return user;
+    } else {
+      return await this.createUser(userData);
+    }
   }
 
   // Event operations

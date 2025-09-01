@@ -23,10 +23,14 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table for simple auth system
+// User storage table for Replit Auth system
 export const users = pgTable("users", {
   id: varchar("id").primaryKey(),
-  username: varchar("username").notNull(),
+  username: varchar("username"),
+  email: varchar("email"),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: text("profile_image_url"),
   isAdmin: boolean("is_admin").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
