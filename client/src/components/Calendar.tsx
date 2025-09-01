@@ -437,8 +437,8 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   const gapWidth = 4;
                   // Дополнительная длина для вторника и среды
                   const extraLength = (colIndex === 1 || colIndex === 2) ? 8 : 0;
-                  // Увеличиваем ширину на 10% чтобы блоки соответствовали сетке + еще 10px + дополнительная длина
-                  return `calc((${spanCount * columnWidthPercent}% + ${(spanCount - 1) * gapWidth}px - 12px) * 1.1 + 10px + ${extraLength}px)`;
+                  // Увеличиваем ширину на 10% чтобы блоки соответствовали сетке + еще 14px + дополнительная длина
+                  return `calc((${spanCount * columnWidthPercent}% + ${(spanCount - 1) * gapWidth}px - 12px) * 1.1 + 14px + ${extraLength}px)`;
                 };
                 
                 const left = getLeftPosition(col);
