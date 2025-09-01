@@ -70,13 +70,41 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
   ];
 
   const handleCategoryChange = (key: keyof FilterOptions['categories'], checked: boolean) => {
-    onFiltersChange({
+    const newFilters = {
       ...filters,
       categories: {
         ...filters.categories,
         [key]: checked,
       },
-    });
+    };
+
+    // Если отключаем зарубежные события, снимаем галочки со всех стран
+    if (key === 'foreign' && !checked) {
+      newFilters.countries = {
+        США: false,
+        Великобритания: false,
+        Евросоюз: false,
+        Германия: false,
+        Япония: false,
+        Индия: false,
+        Бразилия: false,
+      };
+    }
+
+    // Если включаем зарубежные события, включаем все страны
+    if (key === 'foreign' && checked) {
+      newFilters.countries = {
+        США: true,
+        Великобритания: true,
+        Евросоюз: true,
+        Германия: true,
+        Япония: true,
+        Индия: true,
+        Бразилия: true,
+      };
+    }
+
+    onFiltersChange(newFilters);
   };
 
   const handleIndustryChange = (key: keyof FilterOptions['industries'], checked: boolean) => {
