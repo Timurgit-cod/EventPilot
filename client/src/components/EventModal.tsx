@@ -37,6 +37,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
       endDate: selectedDate || new Date().toISOString().split('T')[0],
       category: "internal",
       industry: "межотраслевое",
+      country: undefined,
     },
   });
 
@@ -50,6 +51,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
         endDate: event.endDate,
         category: (event.category === 'internal' || event.category === 'external' || event.category === 'foreign') ? event.category : "internal",
         industry: (event.industry && ['межотраслевое', 'фарма', 'агро', 'IT', 'промышленность', 'ретейл'].includes(event.industry)) ? event.industry as 'межотраслевое' | 'фарма' | 'агро' | 'IT' | 'промышленность' | 'ретейл' : "межотраслевое",
+        country: (event.country && ['США', 'Великобритания', 'Евросоюз', 'Германия', 'Япония', 'Индия', 'Бразилия'].includes(event.country)) ? event.country as 'США' | 'Великобритания' | 'Евросоюз' | 'Германия' | 'Япония' | 'Индия' | 'Бразилия' : undefined,
       });
     } else if (selectedDate) {
       form.reset({
@@ -59,6 +61,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
         endDate: selectedDate,
         category: "internal",
         industry: "межотраслевое",
+        country: undefined,
       });
     }
   }, [event, selectedDate, form]);
@@ -280,6 +283,20 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                 </div>
               )}
 
+              {event.category === 'foreign' && event.country && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Страна
+                  </label>
+                  <span 
+                    className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800"
+                    data-testid="tag-event-country"
+                  >
+                    {event.country}
+                  </span>
+                </div>
+              )}
+
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-4">
                 <p className="text-sm text-yellow-700" data-testid="text-readonly-notice">
                   Только администраторы могут редактировать события.
@@ -460,6 +477,39 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                 </FormItem>
               )}
             />
+
+            {/* Поле выбора страны - показывается только для зарубежных событий */}
+            {form.watch('category') === 'foreign' && (
+              <FormField
+                control={form.control}
+                name="country"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      <Tag className="w-4 h-4 mr-2" />
+                      Страна
+                    </FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-country">
+                          <SelectValue placeholder="Выберите страну" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="США">США</SelectItem>
+                        <SelectItem value="Великобритания">Великобритания</SelectItem>
+                        <SelectItem value="Евросоюз">Евросоюз</SelectItem>
+                        <SelectItem value="Германия">Германия</SelectItem>
+                        <SelectItem value="Япония">Япония</SelectItem>
+                        <SelectItem value="Индия">Индия</SelectItem>
+                        <SelectItem value="Бразилия">Бразилия</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <div className="flex justify-between pt-4 border-t">
               <div>

@@ -45,6 +45,15 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
       промышленность: true,
       ретейл: true,
     },
+    countries: {
+      США: true,
+      Великобритания: true,
+      Евросоюз: true,
+      Германия: true,
+      Япония: true,
+      Индия: true,
+      Бразилия: true,
+    },
   });
 
   // Загружаем события для всех видимых месяцев на календаре
@@ -353,8 +362,16 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 const industryFilter = event.industry ? 
                   filters.industries[event.industry as keyof FilterOptions['industries']] : 
                   filters.industries['межотраслевое']; // fallback для событий без отрасли
+
+                // Применяем фильтры стран (только для зарубежных событий)
+                let countryFilter = true;
+                if (event.category === 'foreign') {
+                  countryFilter = event.country ? 
+                    filters.countries[event.country as keyof FilterOptions['countries']] : 
+                    false; // зарубежные события без указанной страны не показываем
+                }
                 
-                return isVisible && categoryFilter && industryFilter;
+                return isVisible && categoryFilter && industryFilter && countryFilter;
               });
               
               visibleEvents.forEach(event => {
