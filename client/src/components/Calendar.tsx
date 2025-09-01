@@ -432,15 +432,17 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   return `calc(${colIndex * columnWidthPercent}% + ${colIndex * gapWidth}px + ${dayOffset}px)`;
                 };
                 
-                const getWidth = (spanCount: number) => {
+                const getWidth = (spanCount: number, colIndex: number) => {
                   const columnWidthPercent = 100 / 7;
                   const gapWidth = 4;
-                  // Увеличиваем ширину на 10% чтобы блоки соответствовали сетке + еще 10px
-                  return `calc((${spanCount * columnWidthPercent}% + ${(spanCount - 1) * gapWidth}px - 12px) * 1.1 + 10px)`;
+                  // Дополнительная длина для вторника и среды
+                  const extraLength = (colIndex === 1 || colIndex === 2) ? 8 : 0;
+                  // Увеличиваем ширину на 10% чтобы блоки соответствовали сетке + еще 10px + дополнительная длина
+                  return `calc((${spanCount * columnWidthPercent}% + ${(spanCount - 1) * gapWidth}px - 12px) * 1.1 + 10px + ${extraLength}px)`;
                 };
                 
                 const left = getLeftPosition(col);
-                const width = getWidth(span);
+                const width = getWidth(span, col);
                 const top = `calc(${row} * 180px + 48px + ${layer * 26}px + 4px)`;
                 
                 // Определяем выравнивание текста - по центру для больших блоков
