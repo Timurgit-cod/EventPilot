@@ -445,7 +445,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   // Дополнительная длина для блоков разной длительности
                   let durationBonus = 0;
                   if (spanCount === 2) durationBonus = 12; // 2-дневные блоки +12px
-                  if (spanCount === 5) durationBonus = 24; // 5-дневные блоки +24px
+                  if (spanCount === 5) durationBonus = -344; // 5-дневные блоки -344px (как 7-дневные)
                   if (spanCount === 7) durationBonus = -344; // 7-дневные блоки -344px
                   
                   // Увеличиваем ширину на 10% чтобы блоки соответствовали сетке + еще 14px + дополнительная длина + бонус по длительности
