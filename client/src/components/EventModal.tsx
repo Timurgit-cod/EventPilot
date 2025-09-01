@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Calendar, Clock, FileText, Tag, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
@@ -221,9 +221,11 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Описание
                   </label>
-                  <p className="text-gray-900" data-testid="text-event-description">
-                    {event.description}
-                  </p>
+                  <div 
+                    className="text-gray-900 [&_a]:text-blue-600 [&_a]:underline [&_strong]:font-semibold" 
+                    data-testid="text-event-description"
+                    dangerouslySetInnerHTML={{ __html: event.description }}
+                  />
                 </div>
               )}
 
@@ -365,10 +367,10 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                     Описание
                   </FormLabel>
                   <FormControl>
-                    <Textarea 
-                      placeholder="Введите описание события" 
-                      {...field} 
+                    <RichTextEditor
                       value={field.value || ''}
+                      onChange={field.onChange}
+                      placeholder="Введите описание события. Используйте кнопки для форматирования текста или горячие клавиши: Ctrl+B (жирный), Ctrl+K (ссылка)"
                       data-testid="input-description"
                     />
                   </FormControl>

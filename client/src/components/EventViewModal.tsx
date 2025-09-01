@@ -116,9 +116,11 @@ export function EventViewModal({ event, isOpen, onClose }: EventViewModalProps) 
                 <span>Описание</span>
               </h3>
               <div className="bg-gray-50 rounded-lg p-4 border">
-                <p id="event-description" className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                  {event.description}
-                </p>
+                <div 
+                  id="event-description" 
+                  className="text-gray-700 leading-relaxed [&_a]:text-blue-600 [&_a]:underline [&_strong]:font-semibold [&_p]:mb-2 [&_p:last-child]:mb-0"
+                  dangerouslySetInnerHTML={{ __html: event.description }}
+                />
               </div>
             </div>
           )}
