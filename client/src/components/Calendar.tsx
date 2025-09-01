@@ -425,9 +425,11 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 const getLeftPosition = (colIndex: number) => {
                   const columnWidthPercent = 100 / 7; // каждая колонка занимает 1/7 ширины
                   const gapWidth = 4; // gap-1 = 4px
-                  // Вторник (индекс 1) сдвигается дополнительно на 20px вправо
-                  const tuesdayOffset = colIndex === 1 ? 20 : 0;
-                  return `calc(${colIndex * columnWidthPercent}% + ${colIndex * gapWidth}px + ${tuesdayOffset}px)`;
+                  // Специальные сдвиги для отдельных дней
+                  let dayOffset = 0;
+                  if (colIndex === 1) dayOffset = 20; // вторник на 20px вправо
+                  if (colIndex === 2) dayOffset = 25; // среда на 25px вправо
+                  return `calc(${colIndex * columnWidthPercent}% + ${colIndex * gapWidth}px + ${dayOffset}px)`;
                 };
                 
                 const getWidth = (spanCount: number) => {
