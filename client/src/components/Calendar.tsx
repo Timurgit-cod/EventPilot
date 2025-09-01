@@ -441,8 +441,12 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   let extraLength = 0;
                   if (colIndex === 1 || colIndex === 2) extraLength = 8; // вторник и среда +8px
                   if (colIndex === 3 || colIndex === 4) extraLength = 8; // четверг и пятница +8px
-                  // Увеличиваем ширину на 10% чтобы блоки соответствовали сетке + еще 14px + дополнительная длина
-                  return `calc((${spanCount * columnWidthPercent}% + ${(spanCount - 1) * gapWidth}px - 12px) * 1.1 + 14px + ${extraLength}px)`;
+                  
+                  // Дополнительная длина для блоков длительностью 2 дня
+                  const twoDayBonus = spanCount === 2 ? 12 : 0;
+                  
+                  // Увеличиваем ширину на 10% чтобы блоки соответствовали сетке + еще 14px + дополнительная длина + бонус для 2-дневных
+                  return `calc((${spanCount * columnWidthPercent}% + ${(spanCount - 1) * gapWidth}px - 12px) * 1.1 + 14px + ${extraLength}px + ${twoDayBonus}px)`;
                 };
                 
                 const left = getLeftPosition(col);
