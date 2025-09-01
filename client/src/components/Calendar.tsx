@@ -440,7 +440,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   // Дополнительная длина для разных дней
                   let extraLength = 0;
                   if (colIndex === 1 || colIndex === 2) extraLength = 8; // вторник и среда +8px
-                  if (colIndex === 3 || colIndex === 4) extraLength = 4; // четверг и пятница +4px
+                  if (colIndex === 3 || colIndex === 4) extraLength = 8; // четверг и пятница +8px
                   // Увеличиваем ширину на 10% чтобы блоки соответствовали сетке + еще 14px + дополнительная длина
                   return `calc((${spanCount * columnWidthPercent}% + ${(spanCount - 1) * gapWidth}px - 12px) * 1.1 + 14px + ${extraLength}px)`;
                 };
