@@ -64,7 +64,7 @@ export const insertEventSchema = createInsertSchema(events).omit({
 }).extend({
   category: z.enum(['internal', 'external', 'foreign']),
   industry: z.enum(['межотраслевое', 'фарма', 'агро', 'IT', 'промышленность', 'ретейл']),
-  country: z.enum(['США', 'Великобритания', 'Евросоюз', 'Германия', 'Япония', 'Индия', 'Бразилия']).optional()
+  country: z.enum(['США', 'Великобритания', 'Евросоюз', 'Германия', 'Япония', 'Индия', 'Бразилия', 'Китай']).optional()
 });
 
 export const updateEventSchema = insertEventSchema.partial();

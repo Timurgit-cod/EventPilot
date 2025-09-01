@@ -51,7 +51,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
         endDate: event.endDate,
         category: (event.category === 'internal' || event.category === 'external' || event.category === 'foreign') ? event.category : "internal",
         industry: (event.industry && ['межотраслевое', 'фарма', 'агро', 'IT', 'промышленность', 'ретейл'].includes(event.industry)) ? event.industry as 'межотраслевое' | 'фарма' | 'агро' | 'IT' | 'промышленность' | 'ретейл' : "межотраслевое",
-        country: (event.country && ['США', 'Великобритания', 'Евросоюз', 'Германия', 'Япония', 'Индия', 'Бразилия'].includes(event.country)) ? event.country as 'США' | 'Великобритания' | 'Евросоюз' | 'Германия' | 'Япония' | 'Индия' | 'Бразилия' : undefined,
+        country: (event.country && ['США', 'Великобритания', 'Евросоюз', 'Германия', 'Япония', 'Индия', 'Бразилия', 'Китай'].includes(event.country)) ? event.country as 'США' | 'Великобритания' | 'Евросоюз' | 'Германия' | 'Япония' | 'Индия' | 'Бразилия' | 'Китай' : undefined,
       });
     } else if (selectedDate) {
       form.reset({
@@ -503,6 +503,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                         <SelectItem value="Япония">Япония</SelectItem>
                         <SelectItem value="Индия">Индия</SelectItem>
                         <SelectItem value="Бразилия">Бразилия</SelectItem>
+                        <SelectItem value="Китай">Китай</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

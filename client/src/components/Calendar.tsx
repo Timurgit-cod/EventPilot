@@ -53,6 +53,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
       Япония: true,
       Индия: true,
       Бразилия: true,
+      Китай: true,
     },
   });
 

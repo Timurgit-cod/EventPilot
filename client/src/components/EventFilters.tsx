@@ -33,6 +33,7 @@ export interface FilterOptions {
     Япония: boolean;
     Индия: boolean;
     Бразилия: boolean;
+    Китай: boolean;
   };
 }
 
@@ -67,6 +68,7 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
     { key: 'Япония' as keyof FilterOptions['countries'], label: 'Япония' },
     { key: 'Индия' as keyof FilterOptions['countries'], label: 'Индия' },
     { key: 'Бразилия' as keyof FilterOptions['countries'], label: 'Бразилия' },
+    { key: 'Китай' as keyof FilterOptions['countries'], label: 'Китай' },
   ];
 
   const handleCategoryChange = (key: keyof FilterOptions['categories'], checked: boolean) => {
@@ -88,6 +90,7 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
         Япония: false,
         Индия: false,
         Бразилия: false,
+        Китай: false,
       };
     }
 
@@ -101,6 +104,7 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
         Япония: true,
         Индия: true,
         Бразилия: true,
+        Китай: true,
       };
     }
 
@@ -133,7 +137,7 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
   const totalActiveFilters = activeCategoriesCount + activeIndustriesCount + activeCountriesCount;
   const hasActiveFilters = (activeCategoriesCount > 0 && activeCategoriesCount < 3) || 
                           (activeIndustriesCount > 0 && activeIndustriesCount < 6) ||
-                          (activeCountriesCount > 0 && activeCountriesCount < 7);
+                          (activeCountriesCount > 0 && activeCountriesCount < 8);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -260,7 +264,7 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
               onClick={() => onFiltersChange({ 
                 categories: { internal: true, external: true, foreign: true },
                 industries: { межотраслевое: true, фарма: true, агро: true, IT: true, промышленность: true, ретейл: true },
-                countries: { США: true, Великобритания: true, Евросоюз: true, Германия: true, Япония: true, Индия: true, Бразилия: true }
+                countries: { США: true, Великобритания: true, Евросоюз: true, Германия: true, Япония: true, Индия: true, Бразилия: true, Китай: true }
               })}
               className="text-sm"
               data-testid="button-select-all"
@@ -273,7 +277,7 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
               onClick={() => onFiltersChange({ 
                 categories: { internal: false, external: false, foreign: false },
                 industries: { межотраслевое: false, фарма: false, агро: false, IT: false, промышленность: false, ретейл: false },
-                countries: { США: false, Великобритания: false, Евросоюз: false, Германия: false, Япония: false, Индия: false, Бразилия: false }
+                countries: { США: false, Великобритания: false, Евросоюз: false, Германия: false, Япония: false, Индия: false, Бразилия: false, Китай: false }
               })}
               className="text-sm"
               data-testid="button-clear-all"
