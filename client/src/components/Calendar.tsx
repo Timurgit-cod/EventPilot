@@ -425,7 +425,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 const getLeftPosition = (colIndex: number) => {
                   const columnWidthPercent = 100 / 7; // каждая колонка занимает 1/7 ширины
                   const gapWidth = 4; // gap-1 = 4px
-                  return `calc(${colIndex * columnWidthPercent}% + ${colIndex * gapWidth}px + 12px)`;
+                  return `calc(${colIndex * columnWidthPercent}% + ${colIndex * gapWidth}px + 2px)`;
                 };
                 
                 const getWidth = (spanCount: number) => {
