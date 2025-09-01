@@ -428,7 +428,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   // Специальные сдвиги для отдельных дней
                   let dayOffset = 0;
                   if (colIndex === 1) dayOffset = 20; // вторник на 20px вправо
-                  if (colIndex === 2) dayOffset = 25; // среда на 25px вправо
+                  if (colIndex === 2) dayOffset = 50; // среда на 50px вправо
                   return `calc(${colIndex * columnWidthPercent}% + ${colIndex * gapWidth}px + ${dayOffset}px)`;
                 };
                 
