@@ -36,6 +36,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
       startDate: selectedDate || new Date().toISOString().split('T')[0],
       endDate: selectedDate || new Date().toISOString().split('T')[0],
       category: "internal",
+      industry: "межотраслевое",
     },
   });
 
@@ -48,6 +49,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
         startDate: event.startDate,
         endDate: event.endDate,
         category: (event.category === 'internal' || event.category === 'external' || event.category === 'foreign') ? event.category : "internal",
+        industry: (event.industry && ['межотраслевое', 'фарма', 'агро', 'IT', 'промышленность', 'ретейл'].includes(event.industry)) ? event.industry as 'межотраслевое' | 'фарма' | 'агро' | 'IT' | 'промышленность' | 'ретейл' : "межотраслевое",
       });
     } else if (selectedDate) {
       form.reset({
@@ -56,6 +58,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
         startDate: selectedDate,
         endDate: selectedDate,
         category: "internal",
+        industry: "межотраслевое",
       });
     }
   }, [event, selectedDate, form]);
@@ -263,6 +266,20 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                 </div>
               )}
 
+              {event.industry && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Отрасль
+                  </label>
+                  <span 
+                    className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                    data-testid="tag-event-industry"
+                  >
+                    {event.industry}
+                  </span>
+                </div>
+              )}
+
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-4">
                 <p className="text-sm text-yellow-700" data-testid="text-readonly-notice">
                   Только администраторы могут редактировать события.
@@ -408,6 +425,35 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                       <SelectItem value="internal">Внутренняя активность</SelectItem>
                       <SelectItem value="external">Внешняя активность</SelectItem>
                       <SelectItem value="foreign">Зарубежная активность</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="industry"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center">
+                    <Tag className="w-4 h-4 mr-2" />
+                    Отрасль
+                  </FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-industry">
+                        <SelectValue placeholder="Выберите отрасль" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="межотраслевое">Межотраслевое</SelectItem>
+                      <SelectItem value="фарма">Фарма</SelectItem>
+                      <SelectItem value="агро">Агро</SelectItem>
+                      <SelectItem value="IT">IT</SelectItem>
+                      <SelectItem value="промышленность">Промышленность</SelectItem>
+                      <SelectItem value="ретейл">Ретейл</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

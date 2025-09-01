@@ -9,11 +9,22 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 
 export interface FilterOptions {
-  internal: boolean;
-  external: boolean;
-  foreign: boolean;
+  categories: {
+    internal: boolean;
+    external: boolean;
+    foreign: boolean;
+  };
+  industries: {
+    межотраслевое: boolean;
+    фарма: boolean;
+    агро: boolean;
+    IT: boolean;
+    промышленность: boolean;
+    ретейл: boolean;
+  };
 }
 
 interface EventFiltersProps {
@@ -24,21 +35,45 @@ interface EventFiltersProps {
 export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const filterOptions = [
-    { key: 'internal' as keyof FilterOptions, label: 'Внутренняя активность', color: 'bg-yellow-100 text-yellow-800' },
-    { key: 'external' as keyof FilterOptions, label: 'Внешняя активность', color: 'bg-pink-100 text-pink-800' },
-    { key: 'foreign' as keyof FilterOptions, label: 'Зарубежная активность', color: 'bg-gray-100 text-gray-800' },
+  const categoryOptions = [
+    { key: 'internal' as keyof FilterOptions['categories'], label: 'Внутренняя активность', color: 'bg-yellow-100 text-yellow-800' },
+    { key: 'external' as keyof FilterOptions['categories'], label: 'Внешняя активность', color: 'bg-pink-100 text-pink-800' },
+    { key: 'foreign' as keyof FilterOptions['categories'], label: 'Зарубежная активность', color: 'bg-gray-100 text-gray-800' },
   ];
 
-  const handleFilterChange = (key: keyof FilterOptions, checked: boolean) => {
+  const industryOptions = [
+    { key: 'межотраслевое' as keyof FilterOptions['industries'], label: 'Межотраслевое' },
+    { key: 'фарма' as keyof FilterOptions['industries'], label: 'Фарма' },
+    { key: 'агро' as keyof FilterOptions['industries'], label: 'Агро' },
+    { key: 'IT' as keyof FilterOptions['industries'], label: 'IT' },
+    { key: 'промышленность' as keyof FilterOptions['industries'], label: 'Промышленность' },
+    { key: 'ретейл' as keyof FilterOptions['industries'], label: 'Ретейл' },
+  ];
+
+  const handleCategoryChange = (key: keyof FilterOptions['categories'], checked: boolean) => {
     onFiltersChange({
       ...filters,
-      [key]: checked,
+      categories: {
+        ...filters.categories,
+        [key]: checked,
+      },
     });
   };
 
-  const activeFiltersCount = Object.values(filters).filter(Boolean).length;
-  const hasActiveFilters = activeFiltersCount > 0 && activeFiltersCount < 3;
+  const handleIndustryChange = (key: keyof FilterOptions['industries'], checked: boolean) => {
+    onFiltersChange({
+      ...filters,
+      industries: {
+        ...filters.industries,
+        [key]: checked,
+      },
+    });
+  };
+
+  const activeCategoriesCount = Object.values(filters.categories).filter(Boolean).length;
+  const activeIndustriesCount = Object.values(filters.industries).filter(Boolean).length;
+  const totalActiveFilters = activeCategoriesCount + activeIndustriesCount;
+  const hasActiveFilters = (activeCategoriesCount > 0 && activeCategoriesCount < 3) || (activeIndustriesCount > 0 && activeIndustriesCount < 6);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -56,7 +91,7 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
           Фильтры
           {hasActiveFilters && (
             <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              {activeFiltersCount}
+              {totalActiveFilters}
             </span>
           )}
         </Button>
@@ -77,34 +112,68 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
-          <p className="text-sm text-gray-600">
-            Выберите категории событий для отображения:
-          </p>
-          
-          <div className="space-y-3">
-            {filterOptions.map(option => (
-              <div key={option.key} className="flex items-center space-x-3">
-                <Checkbox
-                  id={option.key}
-                  checked={filters[option.key]}
-                  onCheckedChange={(checked) => handleFilterChange(option.key, checked as boolean)}
-                  data-testid={`checkbox-${option.key}`}
-                />
-                <label
-                  htmlFor={option.key}
-                  className={`flex-1 text-sm font-medium px-3 py-2 rounded-lg cursor-pointer transition-colors ${option.color}`}
-                >
-                  {option.label}
-                </label>
-              </div>
-            ))}
+        <div className="space-y-6 py-4">
+          {/* Категории */}
+          <div>
+            <h4 className="text-sm font-medium text-gray-700 mb-3">
+              Категории событий:
+            </h4>
+            <div className="space-y-3">
+              {categoryOptions.map(option => (
+                <div key={option.key} className="flex items-center space-x-3">
+                  <Checkbox
+                    id={`category-${option.key}`}
+                    checked={filters.categories[option.key]}
+                    onCheckedChange={(checked) => handleCategoryChange(option.key, checked as boolean)}
+                    data-testid={`checkbox-category-${option.key}`}
+                  />
+                  <label
+                    htmlFor={`category-${option.key}`}
+                    className={`flex-1 text-sm font-medium px-3 py-2 rounded-lg cursor-pointer transition-colors ${option.color}`}
+                  >
+                    {option.label}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Отрасли */}
+          <div>
+            <h4 className="text-sm font-medium text-gray-700 mb-3">
+              Отрасли:
+            </h4>
+            <div className="space-y-3">
+              {industryOptions.map(option => (
+                <div key={option.key} className="flex items-center space-x-3">
+                  <Checkbox
+                    id={`industry-${option.key}`}
+                    checked={filters.industries[option.key]}
+                    onCheckedChange={(checked) => handleIndustryChange(option.key, checked as boolean)}
+                    data-testid={`checkbox-industry-${option.key}`}
+                  />
+                  <label
+                    htmlFor={`industry-${option.key}`}
+                    className="flex-1 text-sm font-medium px-3 py-2 rounded-lg cursor-pointer transition-colors bg-blue-50 text-blue-800"
+                  >
+                    {option.label}
+                  </label>
+                </div>
+              ))}
+            </div>
           </div>
           
-          <div className="flex justify-between pt-4 border-t">
+          <Separator />
+
+          <div className="flex justify-between">
             <Button
               variant="outline"
-              onClick={() => onFiltersChange({ internal: true, external: true, foreign: true })}
+              onClick={() => onFiltersChange({ 
+                categories: { internal: true, external: true, foreign: true },
+                industries: { межотраслевое: true, фарма: true, агро: true, IT: true, промышленность: true, ретейл: true }
+              })}
               className="text-sm"
               data-testid="button-select-all"
             >
@@ -113,7 +182,10 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
             
             <Button
               variant="outline"
-              onClick={() => onFiltersChange({ internal: false, external: false, foreign: false })}
+              onClick={() => onFiltersChange({ 
+                categories: { internal: false, external: false, foreign: false },
+                industries: { межотраслевое: false, фарма: false, агро: false, IT: false, промышленность: false, ретейл: false }
+              })}
               className="text-sm"
               data-testid="button-clear-all"
             >

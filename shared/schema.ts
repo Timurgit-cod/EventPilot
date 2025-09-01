@@ -39,6 +39,7 @@ export const events = pgTable("events", {
   startDate: varchar("start_date").notNull(), // YYYY-MM-DD format
   endDate: varchar("end_date").notNull(), // YYYY-MM-DD format
   category: varchar("category").notNull(),
+  industry: varchar("industry").notNull().default('межотраслевое'),
   createdBy: varchar("created_by").notNull().references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -60,7 +61,8 @@ export const insertEventSchema = createInsertSchema(events).omit({
   createdAt: true,
   updatedAt: true,
 }).extend({
-  category: z.enum(['internal', 'external', 'foreign'])
+  category: z.enum(['internal', 'external', 'foreign']),
+  industry: z.enum(['межотраслевое', 'фарма', 'агро', 'IT', 'промышленность', 'ретейл'])
 });
 
 export const updateEventSchema = insertEventSchema.partial();

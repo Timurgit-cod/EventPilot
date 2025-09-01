@@ -32,9 +32,19 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>({
-    internal: true,
-    external: true,
-    foreign: true,
+    categories: {
+      internal: true,
+      external: true,
+      foreign: true,
+    },
+    industries: {
+      межотраслевое: true,
+      фарма: true,
+      агро: true,
+      IT: true,
+      промышленность: true,
+      ретейл: true,
+    },
   });
 
   // Загружаем события для всех видимых месяцев на календаре
@@ -337,9 +347,14 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 const isVisible = eventStartDate <= lastVisibleDay && eventEndDate >= firstVisibleDay;
                 
                 // Применяем фильтры категорий
-                const categoryFilter = filters[event.category as keyof FilterOptions];
+                const categoryFilter = filters.categories[event.category as keyof FilterOptions['categories']];
                 
-                return isVisible && categoryFilter;
+                // Применяем фильтры отраслей
+                const industryFilter = event.industry ? 
+                  filters.industries[event.industry as keyof FilterOptions['industries']] : 
+                  filters.industries['межотраслевое']; // fallback для событий без отрасли
+                
+                return isVisible && categoryFilter && industryFilter;
               });
               
               visibleEvents.forEach(event => {
