@@ -129,7 +129,7 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             Фильтр событий
@@ -144,7 +144,7 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-6 py-4">
+        <div className="space-y-6 py-4 overflow-y-auto flex-1 pr-2">
           {/* Категории */}
           <div>
             <h4 className="text-sm font-medium text-gray-700 mb-3">

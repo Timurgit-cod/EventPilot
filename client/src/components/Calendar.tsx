@@ -368,7 +368,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 if (event.category === 'foreign') {
                   countryFilter = event.country ? 
                     filters.countries[event.country as keyof FilterOptions['countries']] : 
-                    false; // зарубежные события без указанной страны не показываем
+                    true; // показываем зарубежные события без указанной страны (legacy события)
                 }
                 
                 return isVisible && categoryFilter && industryFilter && countryFilter;
