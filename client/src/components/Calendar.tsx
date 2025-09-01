@@ -429,8 +429,8 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   let dayOffset = 0;
                   if (colIndex === 1) dayOffset = 24; // вторник на 24px вправо
                   if (colIndex === 2) dayOffset = 54; // среда на 54px вправо
-                  if (colIndex === 3) dayOffset = 90; // четверг на 90px вправо
-                  if (colIndex === 4) dayOffset = 90; // пятница на 90px вправо
+                  if (colIndex === 3) dayOffset = 86; // четверг на 86px вправо (90-4)
+                  if (colIndex === 4) dayOffset = 110; // пятница на 110px вправо (90+20)
                   return `calc(${colIndex * columnWidthPercent}% + ${colIndex * gapWidth}px + ${dayOffset}px)`;
                 };
                 
