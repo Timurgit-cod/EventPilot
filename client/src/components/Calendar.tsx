@@ -461,9 +461,9 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   // Специальные сдвиги для отдельных дней
                   let dayOffset = 0;
                   if (colIndex === 1) dayOffset = 24; // вторник на 24px вправо
-                  if (colIndex === 2) dayOffset = 34; // среда на 34px вправо (54-20)
-                  if (colIndex === 3) dayOffset = 46; // четверг на 46px вправо (86-40)
-                  if (colIndex === 4) dayOffset = 58; // пятница на 58px вправо (118-60)
+                  if (colIndex === 2) dayOffset = 94; // среда на 94px вправо (34+60)
+                  if (colIndex === 3) dayOffset = 126; // четверг на 126px вправо (46+80)
+                  if (colIndex === 4) dayOffset = 158; // пятница на 158px вправо (58+100)
                   return `calc(${colIndex * columnWidthPercent}% + ${colIndex * gapWidth}px + ${dayOffset}px)`;
                 };
                 
