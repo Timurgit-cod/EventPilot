@@ -460,7 +460,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   const gapWidth = 4; // gap-1 = 4px
                   // Специальные сдвиги для отдельных дней
                   let dayOffset = 0;
-                  if (colIndex === 1) dayOffset = 40; // вторник на 40px вправо (24+16)
+                  if (colIndex === 1) dayOffset = 48; // вторник на 48px вправо (40+8)
                   if (colIndex === 2) dayOffset = 94; // среда на 94px вправо (34+60)
                   if (colIndex === 3) dayOffset = 150; // четверг на 150px вправо (126+24)
                   if (colIndex === 4) dayOffset = 206; // пятница на 206px вправо (158+48)
@@ -472,8 +472,11 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   const gapWidth = 4;
                   // Дополнительная длина для разных дней
                   let extraLength = 0;
-                  if (colIndex === 1 || colIndex === 2) extraLength = 8; // вторник и среда +8px
-                  if (colIndex === 3 || colIndex === 4) extraLength = 8; // четверг и пятница +8px
+                  if (colIndex === 0) extraLength = 16; // понедельник +16px
+                  if (colIndex === 1) extraLength = 24; // вторник +24px (8+16)
+                  if (colIndex === 2) extraLength = 24; // среда +24px (8+16)
+                  if (colIndex === 3) extraLength = 24; // четверг +24px (8+16)
+                  if (colIndex === 4) extraLength = 8; // пятница +8px
                   
                   // Дополнительная длина для блоков разной длительности
                   let durationBonus = 0;
