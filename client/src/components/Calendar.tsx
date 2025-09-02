@@ -472,11 +472,11 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   const gapWidth = 4;
                   // Дополнительная длина для разных дней
                   let extraLength = 0;
-                  if (colIndex === 0) extraLength = 16; // понедельник +16px
-                  if (colIndex === 1) extraLength = 24; // вторник +24px (8+16)
+                  if (colIndex === 0) extraLength = 8; // понедельник +8px (16-8)
+                  if (colIndex === 1) extraLength = 16; // вторник +16px (24-8)
                   if (colIndex === 2) extraLength = 24; // среда +24px (8+16)
-                  if (colIndex === 3) extraLength = 24; // четверг +24px (8+16)
-                  if (colIndex === 4) extraLength = 8; // пятница +8px
+                  if (colIndex === 3) extraLength = 16; // четверг +16px (24-8)
+                  if (colIndex === 4) extraLength = 16; // пятница +16px (8+8)
                   
                   // Дополнительная длина для блоков разной длительности
                   let durationBonus = 0;
