@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -77,11 +77,13 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
     queryKey: ['/api/events', nextYear, nextMonth],
   });
 
-  // Объединяем все события и удаляем дубликаты по ID
-  const allEvents = [...currentMonthEvents, ...prevMonthEvents, ...nextMonthEvents];
-  const events = Array.from(
-    new Map(allEvents.map(event => [event.id, event])).values()
-  );
+  // Объединяем все события и удаляем дубликаты по ID с мемоизацией
+  const events = useMemo(() => {
+    const allEvents = [...currentMonthEvents, ...prevMonthEvents, ...nextMonthEvents];
+    return Array.from(
+      new Map(allEvents.map(event => [event.id, event])).values()
+    );
+  }, [currentMonthEvents, prevMonthEvents, nextMonthEvents]);
 
 
 
@@ -451,7 +453,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 }
               });
               
-              return eventsWithPositions.map(({ event, row, col, span, layer }) => {
+              return eventsWithPositions.map(({ event, row, col, span, layer }, index) => {
                 const colors = EVENT_COLORS[event.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.internal;
                 
                 // Упрощенное позиционирование - все колонки одинакового размера
@@ -499,7 +501,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 
                 return (
                   <div
-                    key={event.id}
+                    key={`${event.id}-${row}-${col}-${layer}`}
                     className={`absolute flex items-center ${textAlignment} text-sm py-1 cursor-pointer ${colors.bg} rounded z-20 whitespace-nowrap`}
                     style={{
                       left,
