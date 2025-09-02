@@ -460,10 +460,10 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   const gapWidth = 4; // gap-1 = 4px
                   // Специальные сдвиги для отдельных дней
                   let dayOffset = 0;
-                  if (colIndex === 1) dayOffset = 24; // вторник на 24px вправо
+                  if (colIndex === 1) dayOffset = 40; // вторник на 40px вправо (24+16)
                   if (colIndex === 2) dayOffset = 94; // среда на 94px вправо (34+60)
-                  if (colIndex === 3) dayOffset = 126; // четверг на 126px вправо (46+80)
-                  if (colIndex === 4) dayOffset = 158; // пятница на 158px вправо (58+100)
+                  if (colIndex === 3) dayOffset = 150; // четверг на 150px вправо (126+24)
+                  if (colIndex === 4) dayOffset = 206; // пятница на 206px вправо (158+48)
                   return `calc(${colIndex * columnWidthPercent}% + ${colIndex * gapWidth}px + ${dayOffset}px)`;
                 };
                 
