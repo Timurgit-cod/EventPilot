@@ -447,7 +447,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                     <Tag className="w-4 h-4 mr-2" />
                     Категория
                   </FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger data-testid="select-category">
                         <SelectValue placeholder="Выберите категорию" />
@@ -473,7 +473,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                     <Tag className="w-4 h-4 mr-2" />
                     Отрасль
                   </FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger data-testid="select-industry">
                         <SelectValue placeholder="Выберите отрасль" />
@@ -504,7 +504,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                       <Tag className="w-4 h-4 mr-2" />
                       Страна
                     </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger data-testid="select-country">
                           <SelectValue placeholder="Выберите страну" />
