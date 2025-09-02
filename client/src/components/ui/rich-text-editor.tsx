@@ -7,9 +7,10 @@ interface RichTextEditorProps {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  'data-testid'?: string;
 }
 
-export function RichTextEditor({ value, onChange, placeholder, className }: RichTextEditorProps) {
+export function RichTextEditor({ value, onChange, placeholder, className, 'data-testid': dataTestId }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -116,6 +117,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
           overflowWrap: 'break-word'
         }}
         data-placeholder={placeholder}
+        data-testid={dataTestId}
         suppressContentEditableWarning={true}
       />
     </div>

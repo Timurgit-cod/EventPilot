@@ -92,9 +92,14 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
         return;
       }
       console.error("Create error:", error);
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       toast({
         title: "Ошибка",
-        description: "Не удалось создать событие",
+        description: error.message || "Не удалось создать событие",
         variant: "destructive",
       });
     },
@@ -169,10 +174,18 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
   });
 
   const onSubmit = (data: FormData) => {
+    // Clean HTML content for description
+    const cleanedData = {
+      ...data,
+      description: data.description ? data.description.trim() : ""
+    };
+    
+    console.log("Submitting data:", cleanedData);
+    
     if (event) {
-      updateMutation.mutate(data);
+      updateMutation.mutate(cleanedData);
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(cleanedData);
     }
   };
 
