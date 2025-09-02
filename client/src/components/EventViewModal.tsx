@@ -24,6 +24,10 @@ const EVENT_CATEGORIES = {
 export function EventViewModal({ event, isOpen, onClose }: EventViewModalProps) {
   if (!event) return null;
 
+  // Debug: log the description to see what's actually coming from the API
+  console.log('Event description raw:', event.description);
+  console.log('Event description type:', typeof event.description);
+
   // Log event view when modal opens
   const logEventView = async () => {
     if (event && isOpen) {
