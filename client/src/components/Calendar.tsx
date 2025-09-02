@@ -480,7 +480,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   if (spanCount === 2) durationBonus = 12; // 2-дневные блоки +12px
                   if (spanCount === 3) durationBonus = 28; // 3-дневные блоки +28px (24 + 4 = +28px)
                   if (spanCount === 5) durationBonus = 54; // 5-дневные блоки +54px (52 + 2 = +54px)
-                  if (spanCount === 7) durationBonus = 96; // 7-дневные блоки +96px
+                  if (spanCount === 7) durationBonus = -36; // 7-дневные блоки -36px
                   
                   // Увеличиваем ширину на 10% чтобы блоки соответствовали сетке + еще 14px + дополнительная длина + бонус по длительности
                   return `calc((${spanCount * columnWidthPercent}% + ${(spanCount - 1) * gapWidth}px - 12px) * 1.1 + 14px + ${extraLength}px + ${durationBonus}px)`;
