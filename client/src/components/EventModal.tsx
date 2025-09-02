@@ -173,11 +173,36 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
     },
   });
 
+  // Функция для очистки HTML
+  const sanitizeHTML = (html: string): string => {
+    if (!html) return "";
+    
+    return html
+      .replace(/data-metadata="[^"]*"/g, '') // Удаляем data-metadata атрибуты
+      .replace(/<\/?figmeta[^>]*>/g, '') // Удаляем figmeta теги
+      .replace(/<!--.*?-->/g, '') // Удаляем комментарии
+      .replace(/<\/?o:p[^>]*>/g, '') // Удаляем Office теги
+      .replace(/<\/?meta[^>]*>/g, '') // Удаляем meta теги
+      .replace(/mso-[^;]*:[^;]*;?/g, '') // Удаляем MS Office стили
+      .replace(/style="[^"]*"/g, '') // Удаляем все inline стили
+      .replace(/class="[^"]*"/g, '') // Удаляем все классы
+      .replace(/<span[^>]*>/g, '') // Удаляем span открывающие теги
+      .replace(/<\/span>/g, '') // Удаляем span закрывающие теги
+      .replace(/<div([^>]*)>/g, '<p$1>') // Заменяем div на p
+      .replace(/<\/div>/g, '</p>') // Заменяем /div на /p
+      .replace(/<p\s+[^>]*>/g, '<p>') // Очищаем атрибуты у p тегов
+      .replace(/<br\s*\/?>/g, '<br>') // Нормализуем br теги
+      .replace(/\s+/g, ' ') // Заменяем множественные пробелы одним
+      .replace(/<p><\/p>/g, '') // Удаляем пустые параграфы
+      .replace(/<p>\s*<\/p>/g, '') // Удаляем параграфы с пробелами
+      .trim();
+  };
+
   const onSubmit = (data: FormData) => {
     // Clean HTML content for description
     const cleanedData = {
       ...data,
-      description: data.description ? data.description.trim() : ""
+      description: data.description ? sanitizeHTML(data.description) : ""
     };
     
     console.log("Submitting data:", cleanedData);

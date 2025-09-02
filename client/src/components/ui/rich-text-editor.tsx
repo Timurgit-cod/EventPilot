@@ -21,12 +21,62 @@ export function RichTextEditor({ value, onChange, placeholder, className, 'data-
     }
   }, [value]);
 
+  // Функция для очистки HTML от лишней разметки
+  const cleanHTML = useCallback((html: string) => {
+    // Удаляем метаданные Figma и другие нежелательные элементы
+    let cleanedHTML = html
+      .replace(/data-metadata="[^"]*"/g, '') // Удаляем data-metadata атрибуты
+      .replace(/<\/?figmeta[^>]*>/g, '') // Удаляем figmeta теги
+      .replace(/<!--.*?-->/g, '') // Удаляем комментарии
+      .replace(/<\/?o:p[^>]*>/g, '') // Удаляем Office теги
+      .replace(/<\/?meta[^>]*>/g, '') // Удаляем meta теги
+      .replace(/mso-[^;]*:[^;]*;?/g, '') // Удаляем MS Office стили
+      .replace(/style="[^"]*"/g, '') // Удаляем все inline стили
+      .replace(/class="[^"]*"/g, '') // Удаляем все классы
+      .replace(/<span[^>]*>/g, '') // Удаляем span открывающие теги
+      .replace(/<\/span>/g, '') // Удаляем span закрывающие теги
+      .replace(/<div([^>]*)>/g, '<p$1>') // Заменяем div на p
+      .replace(/<\/div>/g, '</p>') // Заменяем /div на /p
+      .replace(/<p\s+[^>]*>/g, '<p>') // Очищаем атрибуты у p тегов
+      .replace(/<br\s*\/?>/g, '<br>') // Нормализуем br теги
+      .replace(/\s+/g, ' ') // Заменяем множественные пробелы одним
+      .replace(/<p><\/p>/g, '') // Удаляем пустые параграфы
+      .replace(/<p>\s*<\/p>/g, '') // Удаляем параграфы с пробелами
+      .trim();
+
+    // Создаем временный элемент для дальнейшей очистки
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = cleanedHTML;
+    
+    // Проходим по элементам и оставляем только разрешенные теги
+    const allowedTags = ['P', 'BR', 'STRONG', 'EM', 'A'];
+    const elementsToClean = tempDiv.querySelectorAll('*');
+    elementsToClean.forEach(element => {
+      if (!allowedTags.includes(element.tagName)) {
+        // Заменяем неразрешенные теги на их содержимое
+        element.outerHTML = element.innerHTML;
+      } else if (element.tagName === 'A') {
+        // Для ссылок оставляем только href атрибут
+        const href = element.getAttribute('href');
+        const text = element.textContent;
+        if (href && text) {
+          element.outerHTML = `<a href="${href}">${text}</a>`;
+        } else {
+          element.outerHTML = element.innerHTML;
+        }
+      }
+    });
+    
+    return tempDiv.innerHTML;
+  }, []);
+
   const handleInput = useCallback(() => {
     if (editorRef.current) {
       const html = editorRef.current.innerHTML;
-      onChange(html);
+      const cleanedHTML = cleanHTML(html);
+      onChange(cleanedHTML);
     }
-  }, [onChange]);
+  }, [onChange, cleanHTML]);
 
   const execCommand = useCallback((command: string, value?: string) => {
     document.execCommand(command, false, value);
@@ -52,6 +102,27 @@ export function RichTextEditor({ value, onChange, placeholder, className, 'data-
   const removeFormatting = useCallback(() => {
     execCommand('removeFormat');
   }, [execCommand]);
+
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    e.preventDefault();
+    
+    // Получаем текст из буфера обмена
+    const clipboardData = e.clipboardData;
+    const htmlData = clipboardData.getData('text/html');
+    const textData = clipboardData.getData('text/plain');
+    
+    // Если есть HTML данные, очищаем их
+    if (htmlData) {
+      const cleanedHTML = cleanHTML(htmlData);
+      document.execCommand('insertHTML', false, cleanedHTML);
+    } else {
+      // Если только текст, вставляем как есть
+      document.execCommand('insertText', false, textData);
+    }
+    
+    // Обновляем состояние
+    handleInput();
+  }, [cleanHTML, handleInput]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     // Handle Ctrl+B for bold
@@ -111,6 +182,7 @@ export function RichTextEditor({ value, onChange, placeholder, className, 'data-
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
         className="min-h-[100px] p-3 outline-none resize-none [&[data-placeholder]:empty]:before:content-[attr(data-placeholder)] [&[data-placeholder]:empty]:before:text-gray-400 [&[data-placeholder]:empty]:before:pointer-events-none [&_a]:text-blue-600 [&_a]:underline [&_strong]:font-semibold"
         style={{ 
           wordWrap: 'break-word',
