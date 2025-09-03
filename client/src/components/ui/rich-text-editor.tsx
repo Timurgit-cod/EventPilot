@@ -49,7 +49,7 @@ export function RichTextEditor({ value, onChange, placeholder, className, 'data-
     tempDiv.innerHTML = cleanedHTML;
     
     // Проходим по элементам и оставляем только разрешенные теги
-    const allowedTags = ['P', 'BR', 'STRONG', 'EM', 'A'];
+    const allowedTags = ['P', 'BR', 'STRONG', 'EM', 'A', 'B'];
     const elementsToClean = tempDiv.querySelectorAll('*');
     elementsToClean.forEach(element => {
       if (!allowedTags.includes(element.tagName)) {
@@ -63,6 +63,17 @@ export function RichTextEditor({ value, onChange, placeholder, className, 'data-
           element.outerHTML = `<a href="${href}">${text}</a>`;
         } else {
           element.outerHTML = element.innerHTML;
+        }
+      } else if (['STRONG', 'EM', 'B'].includes(element.tagName)) {
+        // Для форматирования очищаем атрибуты но оставляем сам тег
+        const tagName = element.tagName.toLowerCase();
+        const content = element.innerHTML;
+        element.outerHTML = `<${tagName}>${content}</${tagName}>`;
+      } else if (element.tagName === 'P') {
+        // Для параграфов оставляем только содержимое
+        const content = element.innerHTML;
+        if (content.trim()) {
+          element.outerHTML = `<p>${content}</p>`;
         }
       }
     });
