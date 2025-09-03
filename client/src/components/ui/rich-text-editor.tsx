@@ -84,9 +84,7 @@ export function RichTextEditor({ value, onChange, placeholder, className, 'data-
   const handleInput = useCallback(() => {
     if (editorRef.current) {
       const html = editorRef.current.innerHTML;
-      console.log('Raw HTML from editor:', html);
       const cleanedHTML = cleanHTML(html);
-      console.log('Cleaned HTML before onChange:', cleanedHTML);
       onChange(cleanedHTML);
     }
   }, [onChange, cleanHTML]);

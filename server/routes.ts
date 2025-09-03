@@ -179,8 +179,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/events/:id", isAdmin, async (req, res) => {
     try {
-      console.log('Update event request body:', JSON.stringify(req.body, null, 2));
-      console.log('Description in request:', req.body.description);
       
       const validationResult = updateEventSchema.safeParse(req.body);
       if (!validationResult.success) {
