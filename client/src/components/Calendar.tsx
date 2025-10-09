@@ -470,7 +470,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   
                   // Дополнительный сдвиг для событий со среды по пятницу (3 дня начиная со среды)
                   if (colIndex === 2 && spanCount === 3) {
-                    dayOffset += 8; // события ср-пт подвинуть на 8px вправо
+                    dayOffset -= 6; // события ср-пт подвинуть на 6px влево
                   }
                   return `calc(${colIndex * columnWidthPercent}% + ${colIndex * gapWidth}px + ${dayOffset}px)`;
                 };
@@ -490,6 +490,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   let durationBonus = 0;
                   if (spanCount === 2) durationBonus = 16; // 2-дневные блоки +16px (укорочены на 4px: 20-4)
                   if (spanCount === 3) durationBonus = 36; // 3-дневные блоки +36px (укорочены на 16px: 52-16)
+                  if (spanCount === 4) durationBonus = 24; // 4-дневные блоки +24px (увеличены на 24px)
                   if (spanCount === 5) durationBonus = 72; // 5-дневные блоки +72px (увеличены на 18px: 54+18)
                   if (spanCount === 7) durationBonus = -36; // 7-дневные блоки -36px
                   
