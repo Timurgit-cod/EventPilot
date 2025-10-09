@@ -457,16 +457,21 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 const colors = EVENT_COLORS[event.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.internal;
                 
                 // Упрощенное позиционирование - все колонки одинакового размера
-                const getLeftPosition = (colIndex: number) => {
+                const getLeftPosition = (colIndex: number, spanCount: number) => {
                   const columnWidthPercent = 100 / 7; // каждая колонка занимает 1/7 ширины
                   const gapWidth = 4; // gap-1 = 4px
                   // Специальные сдвиги для отдельных дней
                   let dayOffset = 0;
                   if (colIndex === 0) dayOffset = -4; // понедельник на 4px влево
                   if (colIndex === 1) dayOffset = 28; // вторник на 8px влево (36-8)
-                  if (colIndex === 2) dayOffset = 60; // среда на 2px вправо (58+2)
-                  if (colIndex === 3) dayOffset = 106; // четверг на 4px вправо (102+4)
+                  if (colIndex === 2) dayOffset = 68; // среда на 8px вправо (60+8)
+                  if (colIndex === 3) dayOffset = 108; // четверг на 2px вправо (106+2)
                   if (colIndex === 4) dayOffset = 148; // пятница на 2px вправо (146+2)
+                  
+                  // Дополнительный сдвиг для событий со среды по пятницу (3 дня начиная со среды)
+                  if (colIndex === 2 && spanCount === 3) {
+                    dayOffset += 8; // события ср-пт подвинуть на 8px вправо
+                  }
                   return `calc(${colIndex * columnWidthPercent}% + ${colIndex * gapWidth}px + ${dayOffset}px)`;
                 };
                 
@@ -483,7 +488,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   
                   // Дополнительная длина для блоков разной длительности
                   let durationBonus = 0;
-                  if (spanCount === 2) durationBonus = 20; // 2-дневные блоки +20px (укорочены на 8px: 28-8)
+                  if (spanCount === 2) durationBonus = 16; // 2-дневные блоки +16px (укорочены на 4px: 20-4)
                   if (spanCount === 3) durationBonus = 36; // 3-дневные блоки +36px (укорочены на 16px: 52-16)
                   if (spanCount === 5) durationBonus = 72; // 5-дневные блоки +72px (увеличены на 18px: 54+18)
                   if (spanCount === 7) durationBonus = -36; // 7-дневные блоки -36px
@@ -492,7 +497,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   return `calc((${spanCount * columnWidthPercent}% + ${(spanCount - 1) * gapWidth}px - 12px) * 1.1 + 14px + ${extraLength}px + ${durationBonus}px)`;
                 };
                 
-                const left = getLeftPosition(col);
+                const left = getLeftPosition(col, span);
                 const width = getWidth(span, col);
                 const top = `calc(${row} * 180px + 48px + ${layer * 26}px + 4px)`;
                 
