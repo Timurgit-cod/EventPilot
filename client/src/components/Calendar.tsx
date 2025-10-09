@@ -464,9 +464,9 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   let dayOffset = 0;
                   if (colIndex === 0) dayOffset = -4; // понедельник на 4px влево
                   if (colIndex === 1) dayOffset = 28; // вторник на 8px влево (36-8)
-                  if (colIndex === 2) dayOffset = 58; // среда на 36px влево (94-36)
-                  if (colIndex === 3) dayOffset = 102; // четверг на 48px влево (150-48)
-                  if (colIndex === 4) dayOffset = 146; // пятница на 60px влево (206-60)
+                  if (colIndex === 2) dayOffset = 60; // среда на 2px вправо (58+2)
+                  if (colIndex === 3) dayOffset = 106; // четверг на 4px вправо (102+4)
+                  if (colIndex === 4) dayOffset = 148; // пятница на 2px вправо (146+2)
                   return `calc(${colIndex * columnWidthPercent}% + ${colIndex * gapWidth}px + ${dayOffset}px)`;
                 };
                 
@@ -477,15 +477,15 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   let extraLength = 0;
                   if (colIndex === 0) extraLength = 8; // понедельник +8px (16-8)
                   if (colIndex === 1) extraLength = 16; // вторник +16px (24-8)
-                  if (colIndex === 2) extraLength = 24; // среда +24px (8+16)
+                  if (colIndex === 2) extraLength = 16; // среда +16px (укорочена слева на 8px: 24-8)
                   if (colIndex === 3) extraLength = 16; // четверг +16px (24-8)
                   if (colIndex === 4) extraLength = 16; // пятница +16px (8+8)
                   
                   // Дополнительная длина для блоков разной длительности
                   let durationBonus = 0;
-                  if (spanCount === 2) durationBonus = 28; // 2-дневные блоки +28px (12+16)
-                  if (spanCount === 3) durationBonus = 52; // 3-дневные блоки +52px (28+24)
-                  if (spanCount === 5) durationBonus = 54; // 5-дневные блоки +54px (52 + 2 = +54px)
+                  if (spanCount === 2) durationBonus = 20; // 2-дневные блоки +20px (укорочены на 8px: 28-8)
+                  if (spanCount === 3) durationBonus = 36; // 3-дневные блоки +36px (укорочены на 16px: 52-16)
+                  if (spanCount === 5) durationBonus = 72; // 5-дневные блоки +72px (увеличены на 18px: 54+18)
                   if (spanCount === 7) durationBonus = -36; // 7-дневные блоки -36px
                   
                   // Увеличиваем ширину на 10% чтобы блоки соответствовали сетке + еще 14px + дополнительная длина + бонус по длительности
