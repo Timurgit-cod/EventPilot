@@ -35,6 +35,13 @@ export interface FilterOptions {
     Бразилия: boolean;
     Китай: boolean;
   };
+  macroregions: {
+    межрегиональный: boolean;
+    Moscow: boolean;
+    West: boolean;
+    SibUral: boolean;
+    Centre: boolean;
+  };
 }
 
 interface EventFiltersProps {
@@ -69,6 +76,14 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
     { key: 'Индия' as keyof FilterOptions['countries'], label: 'Индия' },
     { key: 'Бразилия' as keyof FilterOptions['countries'], label: 'Бразилия' },
     { key: 'Китай' as keyof FilterOptions['countries'], label: 'Китай' },
+  ];
+
+  const macroregionOptions = [
+    { key: 'межрегиональный' as keyof FilterOptions['macroregions'], label: 'Межрегиональный' },
+    { key: 'Moscow' as keyof FilterOptions['macroregions'], label: 'Moscow' },
+    { key: 'West' as keyof FilterOptions['macroregions'], label: 'West' },
+    { key: 'SibUral' as keyof FilterOptions['macroregions'], label: 'SibUral' },
+    { key: 'Centre' as keyof FilterOptions['macroregions'], label: 'Centre' },
   ];
 
   const handleCategoryChange = (key: keyof FilterOptions['categories'], checked: boolean) => {
@@ -131,13 +146,25 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
     });
   };
 
+  const handleMacroregionChange = (key: keyof FilterOptions['macroregions'], checked: boolean) => {
+    onFiltersChange({
+      ...filters,
+      macroregions: {
+        ...filters.macroregions,
+        [key]: checked,
+      },
+    });
+  };
+
   const activeCategoriesCount = Object.values(filters.categories).filter(Boolean).length;
   const activeIndustriesCount = Object.values(filters.industries).filter(Boolean).length;
   const activeCountriesCount = Object.values(filters.countries).filter(Boolean).length;
-  const totalActiveFilters = activeCategoriesCount + activeIndustriesCount + activeCountriesCount;
+  const activeMacroregionsCount = Object.values(filters.macroregions).filter(Boolean).length;
+  const totalActiveFilters = activeCategoriesCount + activeIndustriesCount + activeCountriesCount + activeMacroregionsCount;
   const hasActiveFilters = (activeCategoriesCount > 0 && activeCategoriesCount < 3) || 
                           (activeIndustriesCount > 0 && activeIndustriesCount < 6) ||
-                          (activeCountriesCount > 0 && activeCountriesCount < 8);
+                          (activeCountriesCount > 0 && activeCountriesCount < 8) ||
+                          (activeMacroregionsCount > 0 && activeMacroregionsCount < 5);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -258,13 +285,41 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
           
           <Separator />
 
+          {/* Макрорегионы */}
+          <div>
+            <h4 className="text-sm font-medium text-gray-700 mb-3">
+              Макрорегионы:
+            </h4>
+            <div className="space-y-3">
+              {macroregionOptions.map(option => (
+                <div key={option.key} className="flex items-center space-x-3">
+                  <Checkbox
+                    id={`macroregion-${option.key}`}
+                    checked={filters.macroregions[option.key]}
+                    onCheckedChange={(checked) => handleMacroregionChange(option.key, checked as boolean)}
+                    data-testid={`checkbox-macroregion-${option.key}`}
+                  />
+                  <label
+                    htmlFor={`macroregion-${option.key}`}
+                    className="flex-1 text-sm font-medium px-3 py-2 rounded-lg cursor-pointer transition-colors bg-purple-50 text-purple-800"
+                  >
+                    {option.label}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <Separator />
+
           <div className="flex justify-between">
             <Button
               variant="outline"
               onClick={() => onFiltersChange({ 
                 categories: { internal: true, external: true, foreign: true },
                 industries: { межотраслевое: true, фарма: true, агро: true, IT: true, промышленность: true, ретейл: true },
-                countries: { США: true, Великобритания: true, Евросоюз: true, Германия: true, Япония: true, Индия: true, Бразилия: true, Китай: true }
+                countries: { США: true, Великобритания: true, Евросоюз: true, Германия: true, Япония: true, Индия: true, Бразилия: true, Китай: true },
+                macroregions: { межрегиональный: true, Moscow: true, West: true, SibUral: true, Centre: true }
               })}
               className="text-sm"
               data-testid="button-select-all"
@@ -277,7 +332,8 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
               onClick={() => onFiltersChange({ 
                 categories: { internal: false, external: false, foreign: false },
                 industries: { межотраслевое: false, фарма: false, агро: false, IT: false, промышленность: false, ретейл: false },
-                countries: { США: false, Великобритания: false, Евросоюз: false, Германия: false, Япония: false, Индия: false, Бразилия: false, Китай: false }
+                countries: { США: false, Великобритания: false, Евросоюз: false, Германия: false, Япония: false, Индия: false, Бразилия: false, Китай: false },
+                macroregions: { межрегиональный: false, Moscow: false, West: false, SibUral: false, Centre: false }
               })}
               className="text-sm"
               data-testid="button-clear-all"

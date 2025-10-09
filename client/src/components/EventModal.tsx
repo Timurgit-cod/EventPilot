@@ -38,6 +38,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
       category: "internal",
       industry: "межотраслевое",
       country: undefined,
+      macroregion: "межрегиональный",
     },
   });
 
@@ -52,6 +53,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
         category: (event.category === 'internal' || event.category === 'external' || event.category === 'foreign') ? event.category : "internal",
         industry: (event.industry && ['межотраслевое', 'фарма', 'агро', 'IT', 'промышленность', 'ретейл'].includes(event.industry)) ? event.industry as 'межотраслевое' | 'фарма' | 'агро' | 'IT' | 'промышленность' | 'ретейл' : "межотраслевое",
         country: (event.country && ['США', 'Великобритания', 'Евросоюз', 'Германия', 'Япония', 'Индия', 'Бразилия', 'Китай'].includes(event.country)) ? event.country as 'США' | 'Великобритания' | 'Евросоюз' | 'Германия' | 'Япония' | 'Индия' | 'Бразилия' | 'Китай' : undefined,
+        macroregion: (event.macroregion && ['межрегиональный', 'Moscow', 'West', 'SibUral', 'Centre'].includes(event.macroregion)) ? event.macroregion as 'межрегиональный' | 'Moscow' | 'West' | 'SibUral' | 'Centre' : "межрегиональный",
       });
     } else if (selectedDate) {
       form.reset({
@@ -62,6 +64,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
         category: "internal",
         industry: "межотраслевое",
         country: undefined,
+        macroregion: "межрегиональный",
       });
     }
   }, [event, selectedDate, form]);
@@ -337,6 +340,20 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                 </div>
               )}
 
+              {event.macroregion && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Макрорегион
+                  </label>
+                  <span 
+                    className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800"
+                    data-testid="tag-event-macroregion"
+                  >
+                    {event.macroregion}
+                  </span>
+                </div>
+              )}
+
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-4">
                 <p className="text-sm text-yellow-700" data-testid="text-readonly-notice">
                   Только администраторы могут редактировать события.
@@ -551,6 +568,34 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                 )}
               />
             )}
+
+            <FormField
+              control={form.control}
+              name="macroregion"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center">
+                    <Tag className="w-4 h-4 mr-2" />
+                    Макрорегион
+                  </FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-macroregion">
+                        <SelectValue placeholder="Выберите макрорегион" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="межрегиональный">Межрегиональный</SelectItem>
+                      <SelectItem value="Moscow">Moscow</SelectItem>
+                      <SelectItem value="West">West</SelectItem>
+                      <SelectItem value="SibUral">SibUral</SelectItem>
+                      <SelectItem value="Centre">Centre</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="flex justify-between pt-4 border-t">
               <div>

@@ -4,7 +4,7 @@
 
 This is a full-stack event calendar application built with React, Express, TypeScript, and PostgreSQL. The application provides a role-based calendar system where all authenticated users can view events, but only administrators can create, edit, and delete events. The first registered user automatically becomes an administrator. The interface is in Russian and uses authentication via Replit Auth with a modern tech stack including shadcn/ui components and Drizzle ORM.
 
-## Project Status: MVP COMPLETE (August 1, 2025)
+## Project Status: MVP COMPLETE (October 9, 2025)
 
 The project has reached MVP (Minimum Viable Product) status with all core features implemented and tested:
 - ✅ Complete calendar interface with Russian localization
@@ -12,6 +12,8 @@ The project has reached MVP (Minimum Viable Product) status with all core featur
 - ✅ Full CRUD operations for events (admin only)
 - ✅ Cross-month event display with proper filtering logic
 - ✅ Event categorization with color coding (internal/external/foreign)
+- ✅ Advanced filtering: categories, industries, countries, and macroregions
+- ✅ Rich Text Editor with HTML formatting for event descriptions
 - ✅ Mobile-responsive design with modern UI components
 - ✅ Database integrity with cascading deletes
 - ✅ Production-ready deployment configuration
@@ -52,8 +54,13 @@ Access control: Role-based system where first user becomes admin, others are rea
 
 ### Database Schema
 - **Users Table**: Stores user information with isAdmin flag (required for Replit Auth)
-- **Events Table**: Stores calendar events with relationships to users
+- **Events Table**: Stores calendar events with category, industry, country, and macroregion fields
+  - Categories: internal (внутренняя активность), external (внешняя активность), foreign (зарубежная активность)
+  - Industries: межотраслевое, фарма, агро, IT, промышленность, ретейл
+  - Countries: США, Великобритания, Евросоюз, Германия, Япония, Индия, Бразилия, Китай
+  - Macroregions: межрегиональный, Moscow, West, SibUral, Centre
 - **Sessions Table**: Manages user sessions (required for Replit Auth)
+- **User Analytics Table**: Tracks user interactions and event clicks
 
 ### Authentication System
 - Replit Auth integration with OpenID Connect
@@ -65,16 +72,28 @@ Access control: Role-based system where first user becomes admin, others are rea
 ### Event Management
 - CRUD operations for calendar events (admin only)
 - Event viewing for all authenticated users
-- Event categorization (meetings, projects, deadlines)
-- Monthly event filtering
+- Multi-dimensional event categorization:
+  - Category: internal/external/foreign events
+  - Industry: cross-industry and specific sectors
+  - Country: for foreign events
+  - Macroregion: межрегиональный, Moscow, West, SibUral, Centre
+- Rich Text Editor for event descriptions with HTML formatting
+- Advanced filtering by categories, industries, countries, and macroregions
+- Monthly event filtering with cross-month display support
 - Real-time updates via React Query
 - Admin-only creation, editing, and deletion via protected API endpoints
 
 ### UI Components
-- Calendar grid view with month navigation
-- Event creation/editing modal
-- Sidebar with event statistics and upcoming events
+- Calendar grid view with month navigation and precise event positioning
+- Event creation/editing modal with Rich Text Editor
+- Advanced filtering dialog with:
+  - Category filters (internal/external/foreign)
+  - Industry filters (6 industries)
+  - Country filters (8 countries for foreign events)
+  - Macroregion filters (5 macroregions)
+- Event view modal with HTML-rendered descriptions
 - Responsive design with mobile support
+- Custom event block positioning for multi-day events
 
 ## Data Flow
 

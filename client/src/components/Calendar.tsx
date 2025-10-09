@@ -55,6 +55,13 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
       Бразилия: true,
       Китай: true,
     },
+    macroregions: {
+      межрегиональный: true,
+      Moscow: true,
+      West: true,
+      SibUral: true,
+      Centre: true,
+    },
   });
 
   // Загружаем события для всех видимых месяцев на календаре
@@ -373,8 +380,13 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                     filters.countries[event.country as keyof FilterOptions['countries']] : 
                     true; // показываем зарубежные события без указанной страны (legacy события)
                 }
+
+                // Применяем фильтры макрорегионов
+                const macroregionFilter = event.macroregion ? 
+                  filters.macroregions[event.macroregion as keyof FilterOptions['macroregions']] : 
+                  filters.macroregions['межрегиональный']; // fallback для событий без макрорегиона
                 
-                return isVisible && categoryFilter && industryFilter && countryFilter;
+                return isVisible && categoryFilter && industryFilter && countryFilter && macroregionFilter;
               });
               
               visibleEvents.forEach(event => {
