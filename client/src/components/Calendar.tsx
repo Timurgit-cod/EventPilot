@@ -471,43 +471,43 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 // Упрощенное позиционирование - все колонки одинакового размера
                 const getLeftPosition = (colIndex: number, spanCount: number) => {
                   const columnWidthPercent = 100 / 7; // каждая колонка занимает 1/7 ширины
-                  const gapWidth = 4; // gap-1 = 4px
-                  // Специальные сдвиги для отдельных дней
+                  const gapWidth = 0.28; // gap-1 в vw (4px при 1400px = 0.286vw)
+                  // Специальные сдвиги для отдельных дней в vw
                   let dayOffset = 0;
-                  if (colIndex === 0) dayOffset = -4; // понедельник на 4px влево
-                  if (colIndex === 1) dayOffset = 28; // вторник на 8px влево (36-8)
-                  if (colIndex === 2) dayOffset = 68; // среда на 8px вправо (60+8)
-                  if (colIndex === 3) dayOffset = 108; // четверг на 2px вправо (106+2)
-                  if (colIndex === 4) dayOffset = 148; // пятница на 2px вправо (146+2)
+                  if (colIndex === 0) dayOffset = -0.28; // понедельник влево
+                  if (colIndex === 1) dayOffset = 2; // вторник
+                  if (colIndex === 2) dayOffset = 4.86; // среда
+                  if (colIndex === 3) dayOffset = 7.71; // четверг
+                  if (colIndex === 4) dayOffset = 10.57; // пятница
                   
                   // Дополнительный сдвиг для событий со среды по пятницу (3 дня начиная со среды)
                   if (colIndex === 2 && spanCount === 3) {
-                    dayOffset -= 1; // события ср-пт подвинуть на 1px влево
+                    dayOffset -= 0.07; // события ср-пт подвинуть влево
                   }
-                  return `calc(${colIndex * columnWidthPercent}% + ${colIndex * gapWidth}px + ${dayOffset}px)`;
+                  return `calc(${colIndex * columnWidthPercent}% + ${colIndex * gapWidth}vw + ${dayOffset}vw)`;
                 };
                 
                 const getWidth = (spanCount: number, colIndex: number) => {
                   const columnWidthPercent = 100 / 7;
-                  const gapWidth = 4;
-                  // Дополнительная длина для разных дней
+                  const gapWidth = 0.28; // gap в vw
+                  // Дополнительная длина для разных дней в vw
                   let extraLength = 0;
-                  if (colIndex === 0) extraLength = 8; // понедельник +8px (16-8)
-                  if (colIndex === 1) extraLength = 16; // вторник +16px (24-8)
-                  if (colIndex === 2) extraLength = 16; // среда +16px (укорочена слева на 8px: 24-8)
-                  if (colIndex === 3) extraLength = 16; // четверг +16px (24-8)
-                  if (colIndex === 4) extraLength = 16; // пятница +16px (8+8)
+                  if (colIndex === 0) extraLength = 0.57; // понедельник
+                  if (colIndex === 1) extraLength = 1.14; // вторник
+                  if (colIndex === 2) extraLength = 1.14; // среда
+                  if (colIndex === 3) extraLength = 1.14; // четверг
+                  if (colIndex === 4) extraLength = 1.14; // пятница
                   
-                  // Дополнительная длина для блоков разной длительности
+                  // Дополнительная длина для блоков разной длительности в vw
                   let durationBonus = 0;
-                  if (spanCount === 2) durationBonus = 16; // 2-дневные блоки +16px (укорочены на 4px: 20-4)
-                  if (spanCount === 3) durationBonus = 36; // 3-дневные блоки +36px (укорочены на 16px: 52-16)
-                  if (spanCount === 4) durationBonus = 48; // 4-дневные блоки +48px (увеличены на 6px: 42+6)
-                  if (spanCount === 5) durationBonus = 72; // 5-дневные блоки +72px (увеличены на 18px: 54+18)
-                  if (spanCount === 7) durationBonus = -132; // 7-дневные блоки -132px (укорочены на 48px: -84-48)
+                  if (spanCount === 2) durationBonus = 1.14; // 2-дневные блоки
+                  if (spanCount === 3) durationBonus = 2.57; // 3-дневные блоки
+                  if (spanCount === 4) durationBonus = 3.43; // 4-дневные блоки
+                  if (spanCount === 5) durationBonus = 5.14; // 5-дневные блоки
+                  if (spanCount === 7) durationBonus = -9.43; // 7-дневные блоки
                   
-                  // Увеличиваем ширину на 10% чтобы блоки соответствовали сетке + еще 14px + дополнительная длина + бонус по длительности
-                  return `calc((${spanCount * columnWidthPercent}% + ${(spanCount - 1) * gapWidth}px - 12px) * 1.1 + 14px + ${extraLength}px + ${durationBonus}px)`;
+                  // Увеличиваем ширину на 10% чтобы блоки соответствовали сетке + дополнительная длина + бонус по длительности
+                  return `calc((${spanCount * columnWidthPercent}% + ${(spanCount - 1) * gapWidth}vw - 0.86vw) * 1.1 + 1vw + ${extraLength}vw + ${durationBonus}vw)`;
                 };
                 
                 const left = getLeftPosition(col, span);
@@ -527,7 +527,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                       width,
                       top,
                       height: '22px',
-                      margin: '0 12px' // добавляем внутренний отступ для визуального улучшения
+                      margin: '0 0.86vw' // адаптивный отступ (12px при 1400px = 0.857vw)
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
