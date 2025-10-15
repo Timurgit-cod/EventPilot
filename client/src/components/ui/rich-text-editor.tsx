@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Bold, Link, Type } from 'lucide-react';
 import { Button } from './button';
+import DOMPurify from 'dompurify';
 
 interface RichTextEditorProps {
   value: string;
@@ -14,134 +15,221 @@ export function RichTextEditor({ value, onChange, placeholder, className, 'data-
   const editorRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState(false);
 
+  // Configure DOMPurify to allow only safe tags and attributes
+  const sanitizeConfig = {
+    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'a', 'b'],
+    ALLOWED_ATTR: ['href'],
+    KEEP_CONTENT: true,
+    RETURN_DOM: false,
+    RETURN_DOM_FRAGMENT: false,
+  };
+
   // Initialize content when value changes from outside
   useEffect(() => {
-    if (editorRef.current && editorRef.current.innerHTML !== value) {
-      editorRef.current.innerHTML = value || '';
+    if (editorRef.current) {
+      const sanitizedValue = DOMPurify.sanitize(value || '', sanitizeConfig);
+      const currentContent = editorRef.current.textContent || '';
+      const newContent = new DOMParser().parseFromString(sanitizedValue, 'text/html').body.textContent || '';
+      
+      if (currentContent !== newContent) {
+        // Use textContent for safe update
+        const range = document.createRange();
+        const selection = window.getSelection();
+        
+        // Clear and update safely
+        while (editorRef.current.firstChild) {
+          editorRef.current.removeChild(editorRef.current.firstChild);
+        }
+        
+        // Parse sanitized HTML and append nodes
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(sanitizedValue, 'text/html');
+        const nodes = Array.from(doc.body.childNodes);
+        
+        nodes.forEach(node => {
+          if (editorRef.current) {
+            editorRef.current.appendChild(node.cloneNode(true));
+          }
+        });
+      }
     }
   }, [value]);
 
   // Функция для очистки HTML от лишней разметки
   const cleanHTML = useCallback((html: string) => {
-    // Удаляем метаданные Figma и другие нежелательные элементы
+    // First pass - remove unwanted elements with regex
     let cleanedHTML = html
-      .replace(/data-metadata="[^"]*"/g, '') // Удаляем data-metadata атрибуты
-      .replace(/<\/?figmeta[^>]*>/g, '') // Удаляем figmeta теги
-      .replace(/<!--.*?-->/g, '') // Удаляем комментарии
-      .replace(/<\/?o:p[^>]*>/g, '') // Удаляем Office теги
-      .replace(/<\/?meta[^>]*>/g, '') // Удаляем meta теги
-      .replace(/mso-[^;]*:[^;]*;?/g, '') // Удаляем MS Office стили
-      .replace(/style="[^"]*"/g, '') // Удаляем все inline стили
-      .replace(/class="[^"]*"/g, '') // Удаляем все классы
-      .replace(/<span[^>]*>/g, '') // Удаляем span открывающие теги
-      .replace(/<\/span>/g, '') // Удаляем span закрывающие теги
-      .replace(/<div([^>]*)>/g, '<p$1>') // Заменяем div на p
-      .replace(/<\/div>/g, '</p>') // Заменяем /div на /p
-      .replace(/<p\s+[^>]*>/g, '<p>') // Очищаем атрибуты у p тегов
-      .replace(/<br\s*\/?>/g, '<br>') // Нормализуем br теги
-      .replace(/\s+/g, ' ') // Заменяем множественные пробелы одним
-      .replace(/<p><\/p>/g, '') // Удаляем пустые параграфы
-      .replace(/<p>\s*<\/p>/g, '') // Удаляем параграфы с пробелами
+      .replace(/data-metadata="[^"]*"/g, '')
+      .replace(/<\/?figmeta[^>]*>/g, '')
+      .replace(/<!--.*?-->/g, '')
+      .replace(/<\/?o:p[^>]*>/g, '')
+      .replace(/<\/?meta[^>]*>/g, '')
+      .replace(/mso-[^;]*:[^;]*;?/g, '')
+      .replace(/style="[^"]*"/g, '')
+      .replace(/class="[^"]*"/g, '')
+      .replace(/<span[^>]*>/g, '')
+      .replace(/<\/span>/g, '')
+      .replace(/<div([^>]*)>/g, '<p$1>')
+      .replace(/<\/div>/g, '</p>')
+      .replace(/<p\s+[^>]*>/g, '<p>')
+      .replace(/<br\s*\/?>/g, '<br>')
+      .replace(/\s+/g, ' ')
+      .replace(/<p><\/p>/g, '')
+      .replace(/<p>\s*<\/p>/g, '')
       .trim();
 
-    // Создаем временный элемент для дальнейшей очистки
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = cleanedHTML;
+    // Second pass - sanitize with DOMPurify
+    const sanitized = DOMPurify.sanitize(cleanedHTML, sanitizeConfig);
     
-    // Проходим по элементам и оставляем только разрешенные теги
-    const allowedTags = ['P', 'BR', 'STRONG', 'EM', 'A', 'B'];
-    const elementsToClean = tempDiv.querySelectorAll('*');
-    elementsToClean.forEach(element => {
-      if (!allowedTags.includes(element.tagName)) {
-        // Заменяем неразрешенные теги на их содержимое
-        element.outerHTML = element.innerHTML;
-      } else if (element.tagName === 'A') {
-        // Для ссылок оставляем только href атрибут
-        const href = element.getAttribute('href');
-        const text = element.textContent;
-        if (href && text) {
-          element.outerHTML = `<a href="${href}">${text}</a>`;
-        } else {
-          element.outerHTML = element.innerHTML;
-        }
-      } else if (['STRONG', 'EM', 'B'].includes(element.tagName)) {
-        // Для форматирования очищаем атрибуты но оставляем сам тег
-        const tagName = element.tagName.toLowerCase();
-        const content = element.innerHTML;
-        element.outerHTML = `<${tagName}>${content}</${tagName}>`;
-      } else if (element.tagName === 'P') {
-        // Для параграфов оставляем только содержимое
-        const content = element.innerHTML;
-        if (content.trim()) {
-          element.outerHTML = `<p>${content}</p>`;
-        }
-      }
-    });
-    
-    return tempDiv.innerHTML;
+    return sanitized;
   }, []);
 
   const handleInput = useCallback(() => {
     if (editorRef.current) {
-      const html = editorRef.current.innerHTML;
-      const cleanedHTML = cleanHTML(html);
+      // Get content safely
+      const selection = window.getSelection();
+      const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+      
+      // Serialize current content
+      const serializer = new XMLSerializer();
+      const currentHTML = Array.from(editorRef.current.childNodes)
+        .map(node => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            return node.textContent || '';
+          }
+          return serializer.serializeToString(node);
+        })
+        .join('');
+      
+      const cleanedHTML = cleanHTML(currentHTML);
       onChange(cleanedHTML);
     }
   }, [onChange, cleanHTML]);
 
-  const execCommand = useCallback((command: string, value?: string) => {
-    document.execCommand(command, false, value);
+  const toggleBold = useCallback(() => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString();
+    
+    if (selectedText) {
+      const strong = document.createElement('strong');
+      strong.textContent = selectedText;
+      range.deleteContents();
+      range.insertNode(strong);
+      
+      // Move cursor after inserted element
+      range.setStartAfter(strong);
+      range.setEndAfter(strong);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      
+      handleInput();
+    }
+    
     if (editorRef.current) {
       editorRef.current.focus();
-      handleInput();
     }
   }, [handleInput]);
 
-  const toggleBold = useCallback(() => {
-    execCommand('bold');
-  }, [execCommand]);
-
   const insertLink = useCallback(() => {
     const url = window.prompt('Введите URL ссылки:');
-    if (url) {
-      // Ensure URL has protocol
+    if (!url) return;
+    
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString();
+    
+    if (selectedText) {
       const formattedUrl = url.startsWith('http') ? url : `https://${url}`;
-      execCommand('createLink', formattedUrl);
+      const link = document.createElement('a');
+      link.href = formattedUrl;
+      link.textContent = selectedText;
+      
+      range.deleteContents();
+      range.insertNode(link);
+      
+      // Move cursor after inserted element
+      range.setStartAfter(link);
+      range.setEndAfter(link);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      
+      handleInput();
     }
-  }, [execCommand]);
+    
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+  }, [handleInput]);
 
   const removeFormatting = useCallback(() => {
-    execCommand('removeFormat');
-  }, [execCommand]);
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString();
+    
+    if (selectedText) {
+      const textNode = document.createTextNode(selectedText);
+      range.deleteContents();
+      range.insertNode(textNode);
+      
+      // Move cursor after inserted text
+      range.setStartAfter(textNode);
+      range.setEndAfter(textNode);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      
+      handleInput();
+    }
+    
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+  }, [handleInput]);
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     e.preventDefault();
     
-    // Получаем текст из буфера обмена
     const clipboardData = e.clipboardData;
     const htmlData = clipboardData.getData('text/html');
     const textData = clipboardData.getData('text/plain');
     
-    // Если есть HTML данные, очищаем их
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    
+    const range = selection.getRangeAt(0);
+    
     if (htmlData) {
       const cleanedHTML = cleanHTML(htmlData);
-      document.execCommand('insertHTML', false, cleanedHTML);
-    } else {
-      // Если только текст, вставляем как есть
-      document.execCommand('insertText', false, textData);
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(cleanedHTML, 'text/html');
+      const fragment = document.createDocumentFragment();
+      
+      Array.from(doc.body.childNodes).forEach(node => {
+        fragment.appendChild(node.cloneNode(true));
+      });
+      
+      range.deleteContents();
+      range.insertNode(fragment);
+    } else if (textData) {
+      const textNode = document.createTextNode(textData);
+      range.deleteContents();
+      range.insertNode(textNode);
     }
     
-    // Обновляем состояние
     handleInput();
   }, [cleanHTML, handleInput]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    // Handle Ctrl+B for bold
     if (e.ctrlKey && e.key === 'b') {
       e.preventDefault();
       toggleBold();
     }
-    // Handle Ctrl+K for link
     if (e.ctrlKey && e.key === 'k') {
       e.preventDefault();
       insertLink();

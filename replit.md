@@ -4,7 +4,7 @@
 
 This is a full-stack event calendar application built with React, Express, TypeScript, and PostgreSQL. The application provides a role-based calendar system where all authenticated users can view events, but only administrators can create, edit, and delete events. The first registered user automatically becomes an administrator. The interface is in Russian and uses authentication via Replit Auth with a modern tech stack including shadcn/ui components and Drizzle ORM.
 
-## Project Status: MVP COMPLETE (October 9, 2025)
+## Project Status: MVP COMPLETE (October 15, 2025)
 
 The project has reached MVP (Minimum Viable Product) status with all core features implemented and tested:
 - ✅ Complete calendar interface with Russian localization
@@ -13,10 +13,12 @@ The project has reached MVP (Minimum Viable Product) status with all core featur
 - ✅ Cross-month event display with proper filtering logic
 - ✅ Event categorization with color coding (internal/external/foreign)
 - ✅ Advanced filtering: categories, industries, countries, and macroregions
-- ✅ Rich Text Editor with HTML formatting for event descriptions
+- ✅ Rich Text Editor with secure HTML formatting (DOMPurify protected)
+- ✅ Responsive calendar positioning using vw units for adaptive scaling
 - ✅ Mobile-responsive design with modern UI components
 - ✅ Database integrity with cascading deletes
-- ✅ Production-ready deployment configuration
+- ✅ Production-ready deployment with secure Dockerfile
+- ✅ Security hardened: XSS protection, non-root Docker user
 - ✅ Complete documentation and deployment guides
 
 ## User Preferences
