@@ -298,16 +298,16 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                   <span 
                     className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
                       event.category === 'internal' 
-                        ? 'bg-yellow-100 text-yellow-800'
+                        ? 'bg-[#FED500] text-[#5a4a00]'
                         : event.category === 'external'
-                        ? 'bg-pink-100 text-pink-800'
-                        : 'bg-gray-100 text-gray-800'
+                        ? 'bg-[#CCD9E2] text-[#1A5C7A]'
+                        : 'bg-[#FFE8B3] text-[#7A4A00]'
                     }`}
                     data-testid="tag-event-category"
                   >
-                    {event.category === 'internal' && 'Внутренняя активность'}
-                    {event.category === 'external' && 'Внешняя активность'}
-                    {event.category === 'foreign' && 'Зарубежная активность'}
+                    {event.category === 'internal' && 'Корпоративная (внутри банка)'}
+                    {event.category === 'external' && 'Российская'}
+                    {event.category === 'foreign' && 'Международная'}
                   </span>
                 </div>
               )}
@@ -496,9 +496,9 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="internal">Внутренняя активность</SelectItem>
-                      <SelectItem value="external">Внешняя активность</SelectItem>
-                      <SelectItem value="foreign">Зарубежная активность</SelectItem>
+                      <SelectItem value="internal">Корпоративная (внутри банка)</SelectItem>
+                      <SelectItem value="external">Российская</SelectItem>
+                      <SelectItem value="foreign">Международная</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

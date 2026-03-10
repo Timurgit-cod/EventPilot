@@ -53,9 +53,9 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const categoryOptions = [
-    { key: 'internal' as keyof FilterOptions['categories'], label: 'Внутренняя активность', color: 'bg-yellow-100 text-yellow-800' },
-    { key: 'external' as keyof FilterOptions['categories'], label: 'Внешняя активность', color: 'bg-pink-100 text-pink-800' },
-    { key: 'foreign' as keyof FilterOptions['categories'], label: 'Зарубежная активность', color: 'bg-gray-100 text-gray-800' },
+    { key: 'internal' as keyof FilterOptions['categories'], label: 'Корпоративная (внутри банка)', color: 'bg-[#FED500] text-[#5a4a00]' },
+    { key: 'external' as keyof FilterOptions['categories'], label: 'Российская', color: 'bg-[#CCD9E2] text-[#1A5C7A]' },
+    { key: 'foreign' as keyof FilterOptions['categories'], label: 'Международная', color: 'bg-[#FFE8B3] text-[#7A4A00]' },
   ];
 
   const industryOptions = [

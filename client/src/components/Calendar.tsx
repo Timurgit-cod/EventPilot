@@ -14,9 +14,9 @@ const MONTHS = [
 ];
 
 const EVENT_COLORS = {
-  internal: { bg: 'bg-yellow-200', text: 'text-yellow-900', dot: 'bg-yellow-600' },
-  external: { bg: 'bg-pink-200', text: 'text-pink-800', dot: 'bg-pink-600' },
-  foreign: { bg: 'bg-gray-200', text: 'text-gray-800', dot: 'bg-gray-600' },
+  internal: { bg: 'bg-[#FED500]', text: 'text-[#5a4a00]', dot: 'bg-[#b39700]' },
+  external: { bg: 'bg-[#CCD9E2]', text: 'text-[#1A5C7A]', dot: 'bg-[#1A5C7A]' },
+  foreign: { bg: 'bg-[#FFE8B3]', text: 'text-[#7A4A00]', dot: 'bg-[#7A4A00]' },
 };
 
 interface CalendarProps {
