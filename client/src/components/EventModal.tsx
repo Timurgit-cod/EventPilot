@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -40,7 +41,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
       startDate: selectedDate || new Date().toISOString().split('T')[0],
       endDate: selectedDate || new Date().toISOString().split('T')[0],
       category: "internal",
-      industry: "межотраслевое",
+      industry: ["межотраслевое"],
       country: undefined,
       macroregion: "межрегиональный",
     },
@@ -52,7 +53,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
     startDate: selectedDate || new Date().toISOString().split('T')[0],
     endDate: selectedDate || new Date().toISOString().split('T')[0],
     category: "internal" as const,
-    industry: "межотраслевое" as const,
+    industry: ["межотраслевое"] as string[],
     country: undefined,
     macroregion: "межрегиональный" as const,
   };
@@ -67,7 +68,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
         startDate: event.startDate,
         endDate: event.endDate,
         category: (event.category === 'internal' || event.category === 'external' || event.category === 'foreign') ? event.category : "internal",
-        industry: (event.industry && ['межотраслевое', 'фарма', 'агро', 'IT', 'промышленность', 'ретейл'].includes(event.industry)) ? event.industry as 'межотраслевое' | 'фарма' | 'агро' | 'IT' | 'промышленность' | 'ретейл' : "межотраслевое",
+        industry: Array.isArray(event.industry) ? event.industry : [event.industry || 'межотраслевое'],
         country: (event.country && ['США', 'Великобритания', 'Евросоюз', 'Германия', 'Япония', 'Индия', 'Бразилия', 'Китай'].includes(event.country)) ? event.country as 'США' | 'Великобритания' | 'Евросоюз' | 'Германия' | 'Япония' | 'Индия' | 'Бразилия' | 'Китай' : undefined,
         macroregion: (event.macroregion && ['межрегиональный', 'Moscow', 'West', 'SibUral', 'Centre'].includes(event.macroregion)) ? event.macroregion as 'межрегиональный' | 'Moscow' | 'West' | 'SibUral' | 'Centre' : "межрегиональный",
       });
@@ -79,7 +80,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
         startDate: selectedDate || new Date().toISOString().split('T')[0],
         endDate: selectedDate || new Date().toISOString().split('T')[0],
         category: (templateEvent.category === 'internal' || templateEvent.category === 'external' || templateEvent.category === 'foreign') ? templateEvent.category : "internal",
-        industry: (templateEvent.industry && ['межотраслевое', 'фарма', 'агро', 'IT', 'промышленность', 'ретейл'].includes(templateEvent.industry)) ? templateEvent.industry as 'межотраслевое' | 'фарма' | 'агро' | 'IT' | 'промышленность' | 'ретейл' : "межотраслевое",
+        industry: Array.isArray(templateEvent.industry) ? templateEvent.industry : [templateEvent.industry || 'межотраслевое'],
         country: (templateEvent.country && ['США', 'Великобритания', 'Евросоюз', 'Германия', 'Япония', 'Индия', 'Бразилия', 'Китай'].includes(templateEvent.country)) ? templateEvent.country as 'США' | 'Великобритания' | 'Евросоюз' | 'Германия' | 'Япония' | 'Индия' | 'Бразилия' | 'Китай' : undefined,
         macroregion: (templateEvent.macroregion && ['межрегиональный', 'Moscow', 'West', 'SibUral', 'Centre'].includes(templateEvent.macroregion)) ? templateEvent.macroregion as 'межрегиональный' | 'Moscow' | 'West' | 'SibUral' | 'Centre' : "межрегиональный",
       });
@@ -340,12 +341,16 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Отрасль
                   </label>
-                  <span 
-                    className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
-                    data-testid="tag-event-industry"
-                  >
-                    {event.industry}
-                  </span>
+                  <div className="flex flex-wrap gap-1" data-testid="tag-event-industry">
+                    {(Array.isArray(event.industry) ? event.industry : [event.industry]).map((ind: string) => (
+                      <span 
+                        key={ind}
+                        className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                      >
+                        {ind}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -573,30 +578,52 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
             <FormField
               control={form.control}
               name="industry"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center">
-                    <Tag className="w-4 h-4 mr-2" />
-                    Отрасль
-                  </FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-industry">
-                        <SelectValue placeholder="Выберите отрасль" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="межотраслевое">Межотраслевое</SelectItem>
-                      <SelectItem value="фарма">Фарма</SelectItem>
-                      <SelectItem value="агро">Агро</SelectItem>
-                      <SelectItem value="IT">IT</SelectItem>
-                      <SelectItem value="промышленность">Промышленность</SelectItem>
-                      <SelectItem value="ретейл">Ретейл</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const industries = [
+                  { value: 'межотраслевое', label: 'Межотраслевое' },
+                  { value: 'фарма', label: 'Фарма' },
+                  { value: 'агро', label: 'Агро' },
+                  { value: 'IT', label: 'IT' },
+                  { value: 'промышленность', label: 'Промышленность' },
+                  { value: 'ретейл', label: 'Ретейл' },
+                ];
+                const selected = Array.isArray(field.value) ? field.value : [];
+                const toggleIndustry = (val: string) => {
+                  if (selected.includes(val)) {
+                    field.onChange(selected.filter((v: string) => v !== val));
+                  } else {
+                    field.onChange([...selected, val]);
+                  }
+                };
+                return (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      <Tag className="w-4 h-4 mr-2" />
+                      Отрасль
+                    </FormLabel>
+                    <div className="grid grid-cols-2 gap-2 pt-1" data-testid="industry-checkboxes">
+                      {industries.map(ind => (
+                        <label
+                          key={ind.value}
+                          className={`flex items-center space-x-2 px-3 py-2 rounded-md border cursor-pointer transition-colors ${
+                            selected.includes(ind.value)
+                              ? 'bg-blue-50 border-blue-300 text-blue-800'
+                              : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <Checkbox
+                            checked={selected.includes(ind.value)}
+                            onCheckedChange={() => toggleIndustry(ind.value)}
+                            data-testid={`checkbox-industry-${ind.value}`}
+                          />
+                          <span className="text-sm">{ind.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
 
             {/* Поле выбора страны - показывается только для международных событий */}

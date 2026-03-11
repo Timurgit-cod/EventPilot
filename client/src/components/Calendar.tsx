@@ -515,10 +515,11 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 // Применяем фильтры категорий
                 const categoryFilter = filters.categories[event.category as keyof FilterOptions['categories']];
                 
-                // Применяем фильтры отраслей
-                const industryFilter = event.industry ? 
-                  filters.industries[event.industry as keyof FilterOptions['industries']] : 
-                  filters.industries['межотраслевое']; // fallback для событий без отрасли
+                // Применяем фильтры отраслей (industry теперь массив)
+                const eventIndustries = Array.isArray(event.industry) ? event.industry : [event.industry || 'межотраслевое'];
+                const industryFilter = eventIndustries.some(
+                  (ind: string) => filters.industries[ind as keyof FilterOptions['industries']]
+                );
 
                 // Применяем фильтры стран (только для зарубежных событий)
                 let countryFilter = true;
