@@ -301,7 +301,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                         ? 'bg-[#FED500] text-[#5a4a00]'
                         : event.category === 'external'
                         ? 'bg-[#CCD9E2] text-[#1A5C7A]'
-                        : 'bg-[#FFE8B3] text-[#7A4A00]'
+                        : 'bg-[#FFD7D2] text-[#7A1A10]'
                     }`}
                     data-testid="tag-event-category"
                   >
