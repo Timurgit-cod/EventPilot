@@ -1,11 +1,22 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, FileEdit, Trash2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EventModal from "./EventModal";
 import { EventFilters, type FilterOptions } from "./EventFilters";
 import { EventViewModal } from "./EventViewModal";
-import type { Event } from "@shared/schema";
+import type { Event, InsertEvent } from "@shared/schema";
+
+type DraftFormData = Omit<InsertEvent, 'userId'>;
+
+interface DraftEvent {
+  id: string;
+  title: string;
+  savedAt: string;
+  formData: DraftFormData;
+}
+
+const DRAFTS_STORAGE_KEY = 'calendar_event_drafts';
 
 const DAYS_OF_WEEK = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 const MONTHS = [
@@ -32,6 +43,23 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
   const [templateEvent, setTemplateEvent] = useState<Event | null>(null);
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [drafts, setDrafts] = useState<DraftEvent[]>(() => {
+    try {
+      const stored = localStorage.getItem(DRAFTS_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isDraftsOpen, setIsDraftsOpen] = useState(false);
+  const [draftFormData, setDraftFormData] = useState<DraftFormData | null>(null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
+    } catch {}
+  }, [drafts]);
+
   const [filters, setFilters] = useState<FilterOptions>({
     categories: {
       internal: true,
@@ -224,6 +252,41 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
     setEditingEvent(null);
     setTemplateEvent(null);
     setSelectedDate(null);
+    setDraftFormData(null);
+  };
+
+  const handleMinimize = (formData: DraftFormData, title: string) => {
+    const newDraft: DraftEvent = {
+      id: Date.now().toString(),
+      title,
+      savedAt: new Date().toISOString(),
+      formData,
+    };
+    setDrafts(prev => [newDraft, ...prev]);
+    setIsModalOpen(false);
+    setEditingEvent(null);
+    setTemplateEvent(null);
+    setSelectedDate(null);
+    setDraftFormData(null);
+  };
+
+  const handleOpenDraft = (draft: DraftEvent) => {
+    setDrafts(prev => prev.filter(d => d.id !== draft.id));
+    setEditingEvent(null);
+    setTemplateEvent(null);
+    setSelectedDate(null);
+    setDraftFormData(draft.formData);
+    setIsDraftsOpen(false);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteDraft = (id: string) => {
+    setDrafts(prev => prev.filter(d => d.id !== id));
+  };
+
+  const formatDraftDate = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
   };
 
   const handleCloseViewModal = () => {
@@ -280,14 +343,87 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
             />
             
             {isAdmin && (
-              <Button
-                onClick={() => handleAddEvent()}
-                className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium shadow-sm"
-                data-testid="button-add-event"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Добавить событие
-              </Button>
+              <div className="flex items-center space-x-2">
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsDraftsOpen(prev => !prev)}
+                    className="text-sm font-medium text-gray-700 border-gray-300 hover:bg-gray-50 relative"
+                    data-testid="button-drafts"
+                  >
+                    <FileEdit className="h-4 w-4 mr-2" />
+                    Черновики
+                    {drafts.length > 0 && (
+                      <span className="ml-2 inline-flex items-center justify-center h-5 w-5 rounded-full bg-blue-600 text-white text-xs font-bold">
+                        {drafts.length}
+                      </span>
+                    )}
+                  </Button>
+
+                  {isDraftsOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setIsDraftsOpen(false)}
+                      />
+                      <div className="absolute right-0 top-full mt-2 z-50 w-80 bg-white border border-gray-200 rounded-lg shadow-xl">
+                        <div className="p-3 border-b border-gray-100 flex items-center justify-between">
+                          <span className="text-sm font-semibold text-gray-800">Черновики</span>
+                          <span className="text-xs text-gray-500">{drafts.length} шт.</span>
+                        </div>
+                        {drafts.length === 0 ? (
+                          <div className="p-6 text-center text-sm text-gray-400">
+                            Нет сохранённых черновиков
+                          </div>
+                        ) : (
+                          <div className="max-h-72 overflow-y-auto divide-y divide-gray-100">
+                            {drafts.map(draft => (
+                              <div key={draft.id} className="flex items-start p-3 hover:bg-gray-50 group">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-800 truncate">{draft.title}</p>
+                                  <p className="text-xs text-gray-400 flex items-center mt-0.5">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    {formatDraftDate(draft.savedAt)}
+                                  </p>
+                                </div>
+                                <div className="flex items-center space-x-1 ml-2 shrink-0">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleOpenDraft(draft)}
+                                    className="h-7 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-xs"
+                                    title="Продолжить редактирование"
+                                  >
+                                    Открыть
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleDeleteDraft(draft.id)}
+                                    className="h-7 w-7 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                                    title="Удалить черновик"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <Button
+                  onClick={() => handleAddEvent()}
+                  className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium shadow-sm"
+                  data-testid="button-add-event"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Добавить событие
+                </Button>
+              </div>
             )}
           </div>
         </div>
@@ -568,6 +704,8 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
           isAdmin={isAdmin}
           templateEvent={templateEvent}
           onCreateFromTemplate={handleCreateFromTemplate}
+          onMinimize={handleMinimize}
+          draftFormData={draftFormData}
         />
       )}
       

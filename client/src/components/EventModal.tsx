@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, Calendar, Clock, FileText, Tag, Trash2, Copy } from "lucide-react";
+import { X, Calendar, Clock, FileText, Tag, Trash2, Copy, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
@@ -21,11 +21,13 @@ interface EventModalProps {
   isAdmin: boolean;
   templateEvent?: Event | null;
   onCreateFromTemplate?: (event: Event) => void;
+  onMinimize?: (formData: FormData, title: string) => void;
+  draftFormData?: FormData | null;
 }
 
 type FormData = Omit<InsertEvent, 'userId'>;
 
-export default function EventModal({ isOpen, onClose, event, selectedDate, isAdmin, templateEvent, onCreateFromTemplate }: EventModalProps) {
+export default function EventModal({ isOpen, onClose, event, selectedDate, isAdmin, templateEvent, onCreateFromTemplate, onMinimize, draftFormData }: EventModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -81,11 +83,14 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
         country: (templateEvent.country && ['США', 'Великобритания', 'Евросоюз', 'Германия', 'Япония', 'Индия', 'Бразилия', 'Китай'].includes(templateEvent.country)) ? templateEvent.country as 'США' | 'Великобритания' | 'Евросоюз' | 'Германия' | 'Япония' | 'Индия' | 'Бразилия' | 'Китай' : undefined,
         macroregion: (templateEvent.macroregion && ['межрегиональный', 'Moscow', 'West', 'SibUral', 'Centre'].includes(templateEvent.macroregion)) ? templateEvent.macroregion as 'межрегиональный' | 'Moscow' | 'West' | 'SibUral' | 'Centre' : "межрегиональный",
       });
+    } else if (draftFormData) {
+      // Режим черновика — восстанавливаем все сохранённые данные
+      form.reset(draftFormData);
     } else {
       // Режим создания нового события — всегда пустая форма
       form.reset(emptyDefaults);
     }
-  }, [event, templateEvent, selectedDate]);
+  }, [event, templateEvent, selectedDate, draftFormData]);
 
   const createMutation = useMutation({
     mutationFn: async (data: FormData) => {
@@ -650,6 +655,22 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
               </div>
 
               <div className="flex space-x-3">
+                {onMinimize && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const values = form.getValues();
+                      onMinimize(values, values.title || 'Без названия');
+                    }}
+                    className="text-gray-600 border-gray-300 hover:bg-gray-50"
+                    title="Свернуть в черновики"
+                    data-testid="button-minimize"
+                  >
+                    <Minus className="w-4 h-4 mr-2" />
+                    Свернуть
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="outline"
