@@ -61,7 +61,7 @@ export const userAnalytics = pgTable("user_analytics", {
   metadata: jsonb("metadata"), // Additional data like IP, browser, etc.
 });
 
-export const insertEventSchema = createInsertSchema(events).omit({
+const baseEventSchema = createInsertSchema(events).omit({
   id: true,
   createdBy: true,
   createdAt: true,
@@ -73,7 +73,21 @@ export const insertEventSchema = createInsertSchema(events).omit({
   macroregion: z.enum(['межрегиональный', 'Moscow', 'West', 'SibUral', 'Centre'])
 });
 
-export const updateEventSchema = insertEventSchema.partial();
+export const insertEventSchema = baseEventSchema.refine(
+  (data) => data.endDate >= data.startDate,
+  {
+    message: "Дата окончания не может быть раньше даты начала",
+    path: ["endDate"],
+  }
+);
+
+export const updateEventSchema = baseEventSchema.partial().refine(
+  (data) => !data.startDate || !data.endDate || data.endDate >= data.startDate,
+  {
+    message: "Дата окончания не может быть раньше даты начала",
+    path: ["endDate"],
+  }
+);
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
