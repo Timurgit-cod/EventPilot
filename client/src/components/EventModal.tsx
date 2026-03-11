@@ -508,6 +508,34 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
 
             <FormField
               control={form.control}
+              name="macroregion"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center">
+                    <Tag className="w-4 h-4 mr-2" />
+                    Макрорегион
+                  </FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-macroregion">
+                        <SelectValue placeholder="Выберите макрорегион" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="межрегиональный">Межрегиональный</SelectItem>
+                      <SelectItem value="Moscow">Moscow</SelectItem>
+                      <SelectItem value="West">West</SelectItem>
+                      <SelectItem value="SibUral">SibUral</SelectItem>
+                      <SelectItem value="Centre">Centre</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="industry"
               render={({ field }) => (
                 <FormItem>
@@ -535,7 +563,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
               )}
             />
 
-            {/* Поле выбора страны - показывается только для зарубежных событий */}
+            {/* Поле выбора страны - показывается только для международных событий */}
             {form.watch('category') === 'foreign' && (
               <FormField
                 control={form.control}
@@ -568,34 +596,6 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                 )}
               />
             )}
-
-            <FormField
-              control={form.control}
-              name="macroregion"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center">
-                    <Tag className="w-4 h-4 mr-2" />
-                    Макрорегион
-                  </FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-macroregion">
-                        <SelectValue placeholder="Выберите макрорегион" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="межрегиональный">Межрегиональный</SelectItem>
-                      <SelectItem value="Moscow">Moscow</SelectItem>
-                      <SelectItem value="West">West</SelectItem>
-                      <SelectItem value="SibUral">SibUral</SelectItem>
-                      <SelectItem value="Centre">Centre</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <div className="flex justify-between pt-4 border-t">
               <div>

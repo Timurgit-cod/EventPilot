@@ -231,6 +231,33 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
 
           <Separator />
 
+          {/* Макрорегионы */}
+          <div>
+            <h4 className="text-sm font-medium text-gray-700 mb-3">
+              Макрорегионы:
+            </h4>
+            <div className="space-y-3">
+              {macroregionOptions.map(option => (
+                <div key={option.key} className="flex items-center space-x-3">
+                  <Checkbox
+                    id={`macroregion-${option.key}`}
+                    checked={filters.macroregions[option.key]}
+                    onCheckedChange={(checked) => handleMacroregionChange(option.key, checked as boolean)}
+                    data-testid={`checkbox-macroregion-${option.key}`}
+                  />
+                  <label
+                    htmlFor={`macroregion-${option.key}`}
+                    className="flex-1 text-sm font-medium px-3 py-2 rounded-lg cursor-pointer transition-colors bg-purple-50 text-purple-800"
+                  >
+                    {option.label}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <Separator />
+
           {/* Отрасли */}
           <div>
             <h4 className="text-sm font-medium text-gray-700 mb-3">
@@ -275,33 +302,6 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
                   <label
                     htmlFor={`country-${option.key}`}
                     className="flex-1 text-sm font-medium px-3 py-2 rounded-lg cursor-pointer transition-colors bg-green-50 text-green-800"
-                  >
-                    {option.label}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <Separator />
-
-          {/* Макрорегионы */}
-          <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-3">
-              Макрорегионы:
-            </h4>
-            <div className="space-y-3">
-              {macroregionOptions.map(option => (
-                <div key={option.key} className="flex items-center space-x-3">
-                  <Checkbox
-                    id={`macroregion-${option.key}`}
-                    checked={filters.macroregions[option.key]}
-                    onCheckedChange={(checked) => handleMacroregionChange(option.key, checked as boolean)}
-                    data-testid={`checkbox-macroregion-${option.key}`}
-                  />
-                  <label
-                    htmlFor={`macroregion-${option.key}`}
-                    className="flex-1 text-sm font-medium px-3 py-2 rounded-lg cursor-pointer transition-colors bg-purple-50 text-purple-800"
                   >
                     {option.label}
                   </label>
