@@ -691,21 +691,13 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                       onMinimize(values, values.title || 'Без названия');
                     }}
                     className="text-gray-600 border-gray-300 hover:bg-gray-50"
-                    title="Свернуть в черновики"
+                    title="Сохранить в черновики"
                     data-testid="button-minimize"
                   >
                     <Minus className="w-4 h-4 mr-2" />
-                    Свернуть
+                    Сохранить в черновики
                   </Button>
                 )}
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onClose}
-                  data-testid="button-cancel"
-                >
-                  Отмена
-                </Button>
                 <Button
                   type="submit"
                   disabled={createMutation.isPending || updateMutation.isPending}
