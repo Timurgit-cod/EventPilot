@@ -329,9 +329,9 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                     }`}
                     data-testid="tag-event-category"
                   >
-                    {event.category === 'internal' && 'Корпоративная (внутри банка)'}
-                    {event.category === 'external' && 'Российская'}
-                    {event.category === 'foreign' && 'Международная'}
+                    {event.category === 'internal' && 'Корпоративные (внутри банка)'}
+                    {event.category === 'external' && 'Российские'}
+                    {event.category === 'foreign' && 'Международные'}
                   </span>
                 </div>
               )}
@@ -537,9 +537,9 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="internal">Корпоративная (внутри банка)</SelectItem>
-                      <SelectItem value="external">Российская</SelectItem>
-                      <SelectItem value="foreign">Международная</SelectItem>
+                      <SelectItem value="internal">Корпоративные (внутри банка)</SelectItem>
+                      <SelectItem value="external">Российские</SelectItem>
+                      <SelectItem value="foreign">Международные</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

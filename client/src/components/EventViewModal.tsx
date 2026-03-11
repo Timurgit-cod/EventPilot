@@ -16,9 +16,9 @@ interface EventViewModalProps {
 }
 
 const EVENT_CATEGORIES = {
-  internal: { label: 'Корпоративная (внутри банка)', color: 'bg-[#FED500] text-[#5a4a00] border-[#e6c000]' },
-  external: { label: 'Российская', color: 'bg-[#CCD9E2] text-[#1A5C7A] border-[#a8c2cf]' },
-  foreign: { label: 'Международная', color: 'bg-[#FFD7D2] text-[#7A1A10] border-[#ffb0a8]' },
+  internal: { label: 'Корпоративные (внутри банка)', color: 'bg-[#FED500] text-[#5a4a00] border-[#e6c000]' },
+  external: { label: 'Российские', color: 'bg-[#CCD9E2] text-[#1A5C7A] border-[#a8c2cf]' },
+  foreign: { label: 'Международные', color: 'bg-[#FFD7D2] text-[#7A1A10] border-[#ffb0a8]' },
 };
 
 export function EventViewModal({ event, isOpen, onClose }: EventViewModalProps) {
