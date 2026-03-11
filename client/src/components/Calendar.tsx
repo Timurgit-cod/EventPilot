@@ -29,6 +29,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [templateEvent, setTemplateEvent] = useState<Event | null>(null);
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>({
@@ -195,11 +196,13 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
     if (!isAdmin) return;
     setSelectedDate(date || null);
     setEditingEvent(null);
+    setTemplateEvent(null);
     setIsModalOpen(true);
   };
 
   const handleEditEvent = (event: Event) => {
     if (!isAdmin) return;
+    setTemplateEvent(null);
     setEditingEvent(event);
     setIsModalOpen(true);
   };
@@ -209,9 +212,17 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
     setIsViewModalOpen(true);
   };
 
+  const handleCreateFromTemplate = (event: Event) => {
+    setEditingEvent(null);
+    setTemplateEvent(event);
+    setSelectedDate(null);
+    setIsModalOpen(true);
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingEvent(null);
+    setTemplateEvent(null);
     setSelectedDate(null);
   };
 
@@ -555,6 +566,8 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
           event={editingEvent}
           selectedDate={selectedDate || undefined}
           isAdmin={isAdmin}
+          templateEvent={templateEvent}
+          onCreateFromTemplate={handleCreateFromTemplate}
         />
       )}
       

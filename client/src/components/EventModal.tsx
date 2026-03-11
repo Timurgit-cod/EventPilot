@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, Calendar, Clock, FileText, Tag, Trash2 } from "lucide-react";
+import { X, Calendar, Clock, FileText, Tag, Trash2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
@@ -19,11 +19,13 @@ interface EventModalProps {
   event?: Event | null;
   selectedDate?: string;
   isAdmin: boolean;
+  templateEvent?: Event | null;
+  onCreateFromTemplate?: (event: Event) => void;
 }
 
 type FormData = Omit<InsertEvent, 'userId'>;
 
-export default function EventModal({ isOpen, onClose, event, selectedDate, isAdmin }: EventModalProps) {
+export default function EventModal({ isOpen, onClose, event, selectedDate, isAdmin, templateEvent, onCreateFromTemplate }: EventModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -42,9 +44,21 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
     },
   });
 
-  // Update form when event changes
+  const emptyDefaults = {
+    title: "",
+    description: "",
+    startDate: selectedDate || new Date().toISOString().split('T')[0],
+    endDate: selectedDate || new Date().toISOString().split('T')[0],
+    category: "internal" as const,
+    industry: "межотраслевое" as const,
+    country: undefined,
+    macroregion: "межрегиональный" as const,
+  };
+
+  // Update form when event or template changes
   useEffect(() => {
     if (event) {
+      // Режим редактирования — заполняем данными существующего события
       form.reset({
         title: event.title,
         description: event.description || "",
@@ -55,19 +69,23 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
         country: (event.country && ['США', 'Великобритания', 'Евросоюз', 'Германия', 'Япония', 'Индия', 'Бразилия', 'Китай'].includes(event.country)) ? event.country as 'США' | 'Великобритания' | 'Евросоюз' | 'Германия' | 'Япония' | 'Индия' | 'Бразилия' | 'Китай' : undefined,
         macroregion: (event.macroregion && ['межрегиональный', 'Moscow', 'West', 'SibUral', 'Centre'].includes(event.macroregion)) ? event.macroregion as 'межрегиональный' | 'Moscow' | 'West' | 'SibUral' | 'Centre' : "межрегиональный",
       });
-    } else if (selectedDate) {
+    } else if (templateEvent) {
+      // Режим «создать на основе» — копируем данные, но без дат
       form.reset({
-        title: "",
-        description: "",
-        startDate: selectedDate,
-        endDate: selectedDate,
-        category: "internal",
-        industry: "межотраслевое",
-        country: undefined,
-        macroregion: "межрегиональный",
+        title: templateEvent.title,
+        description: templateEvent.description || "",
+        startDate: selectedDate || new Date().toISOString().split('T')[0],
+        endDate: selectedDate || new Date().toISOString().split('T')[0],
+        category: (templateEvent.category === 'internal' || templateEvent.category === 'external' || templateEvent.category === 'foreign') ? templateEvent.category : "internal",
+        industry: (templateEvent.industry && ['межотраслевое', 'фарма', 'агро', 'IT', 'промышленность', 'ретейл'].includes(templateEvent.industry)) ? templateEvent.industry as 'межотраслевое' | 'фарма' | 'агро' | 'IT' | 'промышленность' | 'ретейл' : "межотраслевое",
+        country: (templateEvent.country && ['США', 'Великобритания', 'Евросоюз', 'Германия', 'Япония', 'Индия', 'Бразилия', 'Китай'].includes(templateEvent.country)) ? templateEvent.country as 'США' | 'Великобритания' | 'Евросоюз' | 'Германия' | 'Япония' | 'Индия' | 'Бразилия' | 'Китай' : undefined,
+        macroregion: (templateEvent.macroregion && ['межрегиональный', 'Moscow', 'West', 'SibUral', 'Centre'].includes(templateEvent.macroregion)) ? templateEvent.macroregion as 'межрегиональный' | 'Moscow' | 'West' | 'SibUral' | 'Centre' : "межрегиональный",
       });
+    } else {
+      // Режим создания нового события — всегда пустая форма
+      form.reset(emptyDefaults);
     }
-  }, [event, selectedDate, form]);
+  }, [event, templateEvent, selectedDate]);
 
   const createMutation = useMutation({
     mutationFn: async (data: FormData) => {
@@ -378,15 +396,28 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold text-gray-900" data-testid="title-event-modal">
-            {event ? "Редактировать событие" : "Создать событие"}
+            {event ? "Редактировать событие" : templateEvent ? "Создать на основе события" : "Создать событие"}
           </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-            data-testid="button-close-modal"
-          >
-            <X className="w-6 h-6" />
-          </button>
+          <div className="flex items-center gap-2">
+            {event && onCreateFromTemplate && (
+              <button
+                type="button"
+                onClick={() => onCreateFromTemplate(event)}
+                className="text-gray-400 hover:text-blue-600 transition-colors"
+                title="Создать на основе"
+                data-testid="button-create-from-template"
+              >
+                <Copy className="w-5 h-5" />
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+              data-testid="button-close-modal"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         <Form {...form}>
