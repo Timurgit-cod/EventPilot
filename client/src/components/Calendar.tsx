@@ -666,17 +666,6 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                       })}
                     </div>
                   )}
-                  {isAdmin && (
-                    <div className="mt-4">
-                      <Button
-                        onClick={() => handleAddEvent(dateStr)}
-                        className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Добавить событие
-                      </Button>
-                    </div>
-                  )}
                 </div>
               </div>
             );
