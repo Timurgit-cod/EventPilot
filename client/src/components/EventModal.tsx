@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, Calendar, Clock, FileText, Tag, Trash2, Copy, Minus } from "lucide-react";
+import { X, Calendar, Clock, FileText, Tag, Trash2, Copy, Minus, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
@@ -540,6 +540,60 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center">
+                    <Tag className="w-4 h-4 mr-2" />
+                    Категория
+                  </FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-category">
+                        <SelectValue placeholder="Выберите категорию" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="internal">Корпоративные (внутри банка)</SelectItem>
+                      <SelectItem value="external">Российские</SelectItem>
+                      <SelectItem value="foreign">Международные</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="macroregion"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center">
+                    <Tag className="w-4 h-4 mr-2" />
+                    Макрорегион
+                  </FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-macroregion">
+                        <SelectValue placeholder="Выберите макрорегион" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="межрегиональный">Межрегиональный</SelectItem>
+                      <SelectItem value="Moscow">Moscow</SelectItem>
+                      <SelectItem value="West">West</SelectItem>
+                      <SelectItem value="SibUral">SibUral</SelectItem>
+                      <SelectItem value="Centre">Centre</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {form.watch('category') === 'internal' ? (
               <>
                 <FormField
@@ -550,12 +604,18 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                       <FormLabel className="flex items-center">
                         <FileText className="w-4 h-4 mr-2" />
                         Триггер / Контекст
+                        <span className="relative ml-1 group">
+                          <HelpCircle className="w-4 h-4 text-gray-400 cursor-help" />
+                          <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-64 p-2 text-xs text-white bg-gray-800 rounded-lg shadow-lg z-50 font-normal">
+                            Опишите триггер события. Примером триггера могут выступать продуктовые доработки или экономические события.
+                          </span>
+                        </span>
                       </FormLabel>
                       <FormControl>
                         <RichTextEditor
                           value={field.value || ''}
                           onChange={field.onChange}
-                          placeholder="Опишите триггер или контекст события"
+                          placeholder="Опишите триггер события. Примером триггера могут выступать продуктовые доработки или экономические события"
                           data-testid="input-trigger-context"
                         />
                       </FormControl>
@@ -571,12 +631,18 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                       <FormLabel className="flex items-center">
                         <FileText className="w-4 h-4 mr-2" />
                         Содержание
+                        <span className="relative ml-1 group">
+                          <HelpCircle className="w-4 h-4 text-gray-400 cursor-help" />
+                          <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-64 p-2 text-xs text-white bg-gray-800 rounded-lg shadow-lg z-50 font-normal">
+                            Опишите содержание события. Необходимо указать суть, действия, которые нужно совершить. Также можно прикрепить вординг, который нужно направить клиентам.
+                          </span>
+                        </span>
                       </FormLabel>
                       <FormControl>
                         <RichTextEditor
                           value={field.value || ''}
                           onChange={field.onChange}
-                          placeholder="Опишите содержание события"
+                          placeholder="Опишите содержание события. Необходимо указать суть, действия, которые нужно совершить. Также можно прикрепить вординг, который нужно направить клиентам"
                           data-testid="input-content"
                         />
                       </FormControl>
@@ -592,12 +658,18 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                       <FormLabel className="flex items-center">
                         <FileText className="w-4 h-4 mr-2" />
                         Ожидаемый результат
+                        <span className="relative ml-1 group">
+                          <HelpCircle className="w-4 h-4 text-gray-400 cursor-help" />
+                          <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-64 p-2 text-xs text-white bg-gray-800 rounded-lg shadow-lg z-50 font-normal">
+                            На какие метрики направлена данная активность, рост каких показателей ждём.
+                          </span>
+                        </span>
                       </FormLabel>
                       <FormControl>
                         <RichTextEditor
                           value={field.value || ''}
                           onChange={field.onChange}
-                          placeholder="Опишите ожидаемый результат"
+                          placeholder="На какие метрики направлена данная активность, рост каких показателей ждём"
                           data-testid="input-expected-result"
                         />
                       </FormControl>
@@ -613,12 +685,18 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                       <FormLabel className="flex items-center">
                         <FileText className="w-4 h-4 mr-2" />
                         Каким клиентам релевантно
+                        <span className="relative ml-1 group">
+                          <HelpCircle className="w-4 h-4 text-gray-400 cursor-help" />
+                          <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-72 p-2 text-xs text-white bg-gray-800 rounded-lg shadow-lg z-50 font-normal">
+                            Опишите, какие клиенты выступают целевыми, есть ли какие-то ограничения по клиентам, к которым можно выходить.
+                          </span>
+                        </span>
                       </FormLabel>
                       <FormControl>
                         <RichTextEditor
                           value={field.value || ''}
                           onChange={field.onChange}
-                          placeholder="Укажите, каким клиентам это релевантно"
+                          placeholder="Опишите, какие клиенты выступают целевыми, есть ли какие-то ограничения по клиентам, к которым можно выходить"
                           data-testid="input-relevant-clients"
                         />
                       </FormControl>
@@ -770,60 +848,6 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
 
             <FormField
               control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center">
-                    <Tag className="w-4 h-4 mr-2" />
-                    Категория
-                  </FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-category">
-                        <SelectValue placeholder="Выберите категорию" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="internal">Корпоративные (внутри банка)</SelectItem>
-                      <SelectItem value="external">Российские</SelectItem>
-                      <SelectItem value="foreign">Международные</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="macroregion"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center">
-                    <Tag className="w-4 h-4 mr-2" />
-                    Макрорегион
-                  </FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-macroregion">
-                        <SelectValue placeholder="Выберите макрорегион" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="межрегиональный">Межрегиональный</SelectItem>
-                      <SelectItem value="Moscow">Moscow</SelectItem>
-                      <SelectItem value="West">West</SelectItem>
-                      <SelectItem value="SibUral">SibUral</SelectItem>
-                      <SelectItem value="Centre">Centre</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="industry"
               render={({ field }) => {
                 const industries = [
@@ -834,7 +858,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                   { value: 'промышленность', label: 'Промышленность' },
                   { value: 'ретейл', label: 'Ретейл' },
                 ];
-                const selected = Array.isArray(field.value) ? field.value : [];
+                const selected: string[] = Array.isArray(field.value) ? field.value as string[] : [];
                 const toggleIndustry = (val: string) => {
                   if (selected.includes(val)) {
                     field.onChange(selected.filter((v: string) => v !== val));
