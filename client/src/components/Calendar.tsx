@@ -632,7 +632,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   if (colIndex === 1) pxAdjust = -2;
                   if (colIndex === 2) pxAdjust = -2;
                   if (colIndex === 3) pxAdjust = -4;
-                  if (colIndex === 4) pxAdjust = -50;
+                  if (colIndex === 4) pxAdjust = -14;
                   if (colIndex === 3 && spanCount >= 2) pxAdjust = -6;
                   
                   // Дополнительный сдвиг для событий со среды по пятницу (3 дня начиная со среды)
