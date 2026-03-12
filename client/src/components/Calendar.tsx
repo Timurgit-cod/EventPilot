@@ -623,10 +623,10 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   // Специальные сдвиги для отдельных дней в vw
                   let dayOffset = 0;
                   if (colIndex === 0) dayOffset = -0.28; // понедельник влево
-                  if (colIndex === 1) dayOffset = 2; // вторник
-                  if (colIndex === 2) dayOffset = 4.86; // среда
-                  if (colIndex === 3) dayOffset = 7.71; // четверг
-                  if (colIndex === 4) dayOffset = 10.57; // пятница
+                  if (colIndex === 1) dayOffset = 1.86; // вторник (-2px)
+                  if (colIndex === 2) dayOffset = 4.72; // среда (-2px)
+                  if (colIndex === 3) dayOffset = 7.42; // четверг (-4px)
+                  if (colIndex === 4) dayOffset = 10.28; // пятница (-4px)
                   
                   // Дополнительный сдвиг для событий со среды по пятницу (3 дня начиная со среды)
                   if (colIndex === 2 && spanCount === 3) {
