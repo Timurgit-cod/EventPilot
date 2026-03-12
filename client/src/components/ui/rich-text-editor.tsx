@@ -14,8 +14,8 @@ interface RichTextEditorProps {
 export function RichTextEditor({ value, onChange, placeholder, className, 'data-testid': dataTestId }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const isInternalChange = useRef(false);
 
-  // Configure DOMPurify to allow only safe tags and attributes
   const sanitizeConfig = {
     ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'a', 'b'],
     ALLOWED_ATTR: ['href'],
@@ -24,24 +24,21 @@ export function RichTextEditor({ value, onChange, placeholder, className, 'data-
     RETURN_DOM_FRAGMENT: false,
   };
 
-  // Initialize content when value changes from outside
   useEffect(() => {
+    if (isInternalChange.current) {
+      isInternalChange.current = false;
+      return;
+    }
     if (editorRef.current) {
       const sanitizedValue = DOMPurify.sanitize(value || '', sanitizeConfig);
       const currentContent = editorRef.current.textContent || '';
       const newContent = new DOMParser().parseFromString(sanitizedValue, 'text/html').body.textContent || '';
       
       if (currentContent !== newContent) {
-        // Use textContent for safe update
-        const range = document.createRange();
-        const selection = window.getSelection();
-        
-        // Clear and update safely
         while (editorRef.current.firstChild) {
           editorRef.current.removeChild(editorRef.current.firstChild);
         }
         
-        // Parse sanitized HTML and append nodes
         const parser = new DOMParser();
         const doc = parser.parseFromString(sanitizedValue, 'text/html');
         const nodes = Array.from(doc.body.childNodes);
@@ -55,9 +52,7 @@ export function RichTextEditor({ value, onChange, placeholder, className, 'data-
     }
   }, [value]);
 
-  // Функция для очистки HTML от лишней разметки
   const cleanHTML = useCallback((html: string) => {
-    // First pass - remove unwanted elements with regex
     let cleanedHTML = html
       .replace(/data-metadata="[^"]*"/g, '')
       .replace(/<\/?figmeta[^>]*>/g, '')
@@ -73,12 +68,10 @@ export function RichTextEditor({ value, onChange, placeholder, className, 'data-
       .replace(/<\/div>/g, '</p>')
       .replace(/<p\s+[^>]*>/g, '<p>')
       .replace(/<br\s*\/?>/g, '<br>')
-      .replace(/\s+/g, ' ')
       .replace(/<p><\/p>/g, '')
       .replace(/<p>\s*<\/p>/g, '')
       .trim();
 
-    // Second pass - sanitize with DOMPurify
     const sanitized = DOMPurify.sanitize(cleanedHTML, sanitizeConfig);
     
     return sanitized;
@@ -86,11 +79,6 @@ export function RichTextEditor({ value, onChange, placeholder, className, 'data-
 
   const handleInput = useCallback(() => {
     if (editorRef.current) {
-      // Get content safely
-      const selection = window.getSelection();
-      const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
-      
-      // Serialize current content
       const serializer = new XMLSerializer();
       const currentHTML = Array.from(editorRef.current.childNodes)
         .map(node => {
@@ -102,6 +90,7 @@ export function RichTextEditor({ value, onChange, placeholder, className, 'data-
         .join('');
       
       const cleanedHTML = cleanHTML(currentHTML);
+      isInternalChange.current = true;
       onChange(cleanedHTML);
     }
   }, [onChange, cleanHTML]);
@@ -119,7 +108,6 @@ export function RichTextEditor({ value, onChange, placeholder, className, 'data-
       range.deleteContents();
       range.insertNode(strong);
       
-      // Move cursor after inserted element
       range.setStartAfter(strong);
       range.setEndAfter(strong);
       selection.removeAllRanges();
@@ -152,7 +140,6 @@ export function RichTextEditor({ value, onChange, placeholder, className, 'data-
       range.deleteContents();
       range.insertNode(link);
       
-      // Move cursor after inserted element
       range.setStartAfter(link);
       range.setEndAfter(link);
       selection.removeAllRanges();
@@ -178,7 +165,6 @@ export function RichTextEditor({ value, onChange, placeholder, className, 'data-
       range.deleteContents();
       range.insertNode(textNode);
       
-      // Move cursor after inserted text
       range.setStartAfter(textNode);
       range.setEndAfter(textNode);
       selection.removeAllRanges();
@@ -238,7 +224,6 @@ export function RichTextEditor({ value, onChange, placeholder, className, 'data-
 
   return (
     <div className={`border rounded-md ${isFocused ? 'ring-2 ring-ring ring-offset-2' : ''} ${className || ''}`}>
-      {/* Toolbar */}
       <div className="flex items-center gap-1 p-2 border-b bg-gray-50">
         <Button
           type="button"
@@ -273,7 +258,6 @@ export function RichTextEditor({ value, onChange, placeholder, className, 'data-
         </Button>
       </div>
 
-      {/* Editor */}
       <div
         ref={editorRef}
         contentEditable
