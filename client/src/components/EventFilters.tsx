@@ -75,7 +75,7 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
   const categoryOptions = [
     { key: 'internal' as keyof FilterOptions['categories'], label: 'Корпоративные (внутри банка)', color: 'bg-[#FED500] text-[#5a4a00]' },
     { key: 'external' as keyof FilterOptions['categories'], label: 'Российские', color: 'bg-[#CCD9E2] text-[#1A5C7A]' },
-    { key: 'foreign' as keyof FilterOptions['categories'], label: 'Международные', color: 'bg-[#FFD7D2] text-[#7A1A10]' },
+    { key: 'foreign' as keyof FilterOptions['categories'], label: 'Международные', color: 'bg-[#AFE1E1] text-[#1A5C5C]' },
   ];
 
   const macroregionOptions = [
