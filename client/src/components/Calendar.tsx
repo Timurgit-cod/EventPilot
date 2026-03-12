@@ -639,7 +639,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   if (colIndex === 2 && spanCount === 3) {
                     dayOffset -= 0.07; // события ср-пт подвинуть влево
                   }
-                  return `calc(${colIndex * columnWidthPercent}% + ${colIndex * gapWidth}vw + ${dayOffset}vw + ${pxAdjust}px)`;
+                  return `calc(${colIndex * columnWidthPercent}% + ${colIndex * gapWidth}vw + ${dayOffset}vw + ${pxAdjust + 2}px)`;
                 };
                 
                 const getWidth = (spanCount: number, colIndex: number) => {
@@ -662,7 +662,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   if (spanCount === 7) durationBonus = -18; // 7-дневные блоки (укорочены на 120px)
                   
                   // Увеличиваем ширину на 10% чтобы блоки соответствовали сетке + дополнительная длина + бонус по длительности
-                  return `calc((${spanCount * columnWidthPercent}% + ${(spanCount - 1) * gapWidth}vw - 0.86vw) * 1.1 + 1vw + ${extraLength}vw + ${durationBonus}vw)`;
+                  return `calc((${spanCount * columnWidthPercent}% + ${(spanCount - 1) * gapWidth}vw - 0.86vw) * 1.1 + 1vw + ${extraLength}vw + ${durationBonus}vw - 4px)`;
                 };
                 
                 const left = getLeftPosition(col, span);
