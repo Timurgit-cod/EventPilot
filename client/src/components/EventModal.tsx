@@ -41,6 +41,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
       startDate: selectedDate || new Date().toISOString().split('T')[0],
       endDate: selectedDate || new Date().toISOString().split('T')[0],
       category: "internal",
+      time: "",
       industry: ["межотраслевое"],
       country: undefined,
       macroregion: "межрегиональный",
@@ -53,6 +54,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
     startDate: selectedDate || new Date().toISOString().split('T')[0],
     endDate: selectedDate || new Date().toISOString().split('T')[0],
     category: "internal" as const,
+    time: "",
     industry: ["межотраслевое"] as string[],
     country: undefined,
     macroregion: "межрегиональный" as const,
@@ -68,6 +70,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
         startDate: event.startDate,
         endDate: event.endDate,
         category: (event.category === 'internal' || event.category === 'external' || event.category === 'foreign') ? event.category : "internal",
+        time: event.time || "",
         industry: Array.isArray(event.industry) ? event.industry : [event.industry || 'межотраслевое'],
         country: (event.country && ['США', 'Великобритания', 'Евросоюз', 'Германия', 'Япония', 'Индия', 'Бразилия', 'Китай'].includes(event.country)) ? event.country as 'США' | 'Великобритания' | 'Евросоюз' | 'Германия' | 'Япония' | 'Индия' | 'Бразилия' | 'Китай' : undefined,
         macroregion: (event.macroregion && ['межрегиональный', 'Moscow', 'West', 'SibUral', 'Centre'].includes(event.macroregion)) ? event.macroregion as 'межрегиональный' | 'Moscow' | 'West' | 'SibUral' | 'Centre' : "межрегиональный",
@@ -80,6 +83,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
         startDate: selectedDate || new Date().toISOString().split('T')[0],
         endDate: selectedDate || new Date().toISOString().split('T')[0],
         category: (templateEvent.category === 'internal' || templateEvent.category === 'external' || templateEvent.category === 'foreign') ? templateEvent.category : "internal",
+        time: templateEvent.time || "",
         industry: Array.isArray(templateEvent.industry) ? templateEvent.industry : [templateEvent.industry || 'межотраслевое'],
         country: (templateEvent.country && ['США', 'Великобритания', 'Евросоюз', 'Германия', 'Япония', 'Индия', 'Бразилия', 'Китай'].includes(templateEvent.country)) ? templateEvent.country as 'США' | 'Великобритания' | 'Евросоюз' | 'Германия' | 'Япония' | 'Индия' | 'Бразилия' | 'Китай' : undefined,
         macroregion: (templateEvent.macroregion && ['межрегиональный', 'Moscow', 'West', 'SibUral', 'Centre'].includes(templateEvent.macroregion)) ? templateEvent.macroregion as 'межрегиональный' | 'Moscow' | 'West' | 'SibUral' | 'Centre' : "межрегиональный",
@@ -314,6 +318,17 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                 </div>
               </div>
 
+              {event.category === 'internal' && event.time && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Время
+                  </label>
+                  <p className="text-gray-900" data-testid="text-event-time">
+                    {event.time}
+                  </p>
+                </div>
+              )}
+
               {event.category && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -520,6 +535,30 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                 )}
               />
             </div>
+
+            {form.watch('category') === 'internal' && (
+              <FormField
+                control={form.control}
+                name="time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      <Clock className="w-4 h-4 mr-2" />
+                      Время (необязательно)
+                    </FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="time" 
+                        {...field} 
+                        value={field.value || ''}
+                        data-testid="input-time"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}

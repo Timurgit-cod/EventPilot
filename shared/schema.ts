@@ -43,6 +43,7 @@ export const events = pgTable("events", {
   startDate: varchar("start_date").notNull(), // YYYY-MM-DD format
   endDate: varchar("end_date").notNull(), // YYYY-MM-DD format
   category: varchar("category").notNull(),
+  time: varchar("time"),
   industry: text("industry").array().notNull().default(sql`ARRAY['межотраслевое']::text[]`),
   country: varchar("country"), // Страна для зарубежных событий
   macroregion: varchar("macroregion").notNull().default('межрегиональный'), // Макрорегион
@@ -68,6 +69,7 @@ const baseEventSchema = createInsertSchema(events).omit({
   updatedAt: true,
 }).extend({
   category: z.enum(['internal', 'external', 'foreign']),
+  time: z.string().optional().or(z.literal('')),
   industry: z.array(z.enum(['межотраслевое', 'фарма', 'агро', 'IT', 'промышленность', 'ретейл'])).min(1, 'Выберите хотя бы одну отрасль'),
   country: z.enum(['США', 'Великобритания', 'Евросоюз', 'Германия', 'Япония', 'Индия', 'Бразилия', 'Китай']).optional(),
   macroregion: z.enum(['межрегиональный', 'Moscow', 'West', 'SibUral', 'Centre'])

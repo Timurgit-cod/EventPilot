@@ -130,6 +130,7 @@ export class MemStorage implements IStorage {
       startDate: eventData.startDate,
       endDate: eventData.endDate,
       category: eventData.category,
+      time: eventData.time || null,
       industry: eventData.industry || ['межотраслевое'],
       macroregion: eventData.macroregion || 'межрегиональный',
       country: eventData.country || null,

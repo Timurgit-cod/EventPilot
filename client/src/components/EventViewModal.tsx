@@ -99,6 +99,14 @@ export function EventViewModal({ event, isOpen, onClose }: EventViewModalProps) 
               </span>
             </div>
             
+            {/* Time (only for corporate events) */}
+            {event.category === 'internal' && event.time && (
+              <div className="flex items-center space-x-2 text-gray-600">
+                <Clock className="h-4 w-4" />
+                <span className="text-sm">Время: {event.time}</span>
+              </div>
+            )}
+
             {/* Date range */}
             <div className="flex items-center space-x-2 text-gray-600">
               <Calendar className="h-4 w-4" />
