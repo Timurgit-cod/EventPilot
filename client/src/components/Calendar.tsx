@@ -1,6 +1,7 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Plus, FileEdit, Trash2, Clock } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ChevronLeft, ChevronRight, Plus, FileEdit, Trash2, Clock, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import EventModal from "./EventModal";
@@ -64,12 +65,66 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
   });
   const [isDraftsOpen, setIsDraftsOpen] = useState(false);
   const [draftFormData, setDraftFormData] = useState<DraftFormData | null>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchDebounced, setSearchDebounced] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     try {
       localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
     } catch {}
   }, [drafts]);
+
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    if (searchQuery.trim().length === 0) {
+      setSearchDebounced('');
+      return;
+    }
+    searchTimerRef.current = setTimeout(() => {
+      setSearchDebounced(searchQuery.trim());
+    }, 300);
+    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchOpen]);
+
+  const searchResults = useQuery<Event[]>({
+    queryKey: ['/api/events/search', searchDebounced],
+    queryFn: async () => {
+      if (!searchDebounced) return [];
+      const res = await fetch(`/api/events/search?q=${encodeURIComponent(searchDebounced)}`);
+      if (!res.ok) throw new Error('Search failed');
+      return res.json();
+    },
+    enabled: searchDebounced.length > 0,
+  });
+
+  const handleSearchSelect = useCallback((event: Event) => {
+    setViewingEvent(event);
+    setIsViewModalOpen(true);
+    setIsSearchOpen(false);
+    setSearchQuery('');
+    setSearchDebounced('');
+  }, []);
+
+  const closeSearch = useCallback(() => {
+    setIsSearchOpen(false);
+    setSearchQuery('');
+    setSearchDebounced('');
+  }, []);
+
+  const CATEGORY_LABELS: Record<string, string> = {
+    internal: 'Корпоративные',
+    external: 'Российские',
+    foreign: 'Международные',
+  };
 
   const [filters, setFilters] = useState<FilterOptions>({
     categories: {
@@ -424,6 +479,73 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
           </div>
           
           <div className="flex items-center space-x-3">
+            <div className="relative">
+              {isSearchOpen ? (
+                <div className="flex items-center">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      ref={searchInputRef}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Поиск событий..."
+                      className="w-[280px] pl-9 pr-8 text-sm"
+                    />
+                    <button
+                      onClick={closeSearch}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  {isSearchOpen && searchQuery.trim().length > 0 && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={closeSearch} />
+                      <div className="absolute right-0 top-full mt-1 z-50 w-[360px] bg-white border border-gray-200 rounded-lg shadow-xl max-h-80 overflow-y-auto">
+                        {searchResults.isLoading && (
+                          <div className="p-4 text-center text-sm text-gray-400">Поиск...</div>
+                        )}
+                        {searchResults.data && searchResults.data.length === 0 && !searchResults.isLoading && (
+                          <div className="p-4 text-center text-sm text-gray-400">Ничего не найдено</div>
+                        )}
+                        {searchResults.data && searchResults.data.length > 0 && searchResults.data.map((evt) => {
+                          const colors = EVENT_COLORS[evt.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.internal;
+                          return (
+                            <button
+                              key={evt.id}
+                              onClick={() => handleSearchSelect(evt)}
+                              className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 flex items-start gap-3 transition-colors"
+                            >
+                              <div className={`mt-1.5 w-2.5 h-2.5 rounded-full shrink-0 ${colors.dot}`} />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-gray-900 truncate">{evt.title}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-xs text-gray-500">{evt.startDate}{evt.endDate !== evt.startDate ? ` — ${evt.endDate}` : ''}</span>
+                                  <span className={`text-xs px-1.5 py-0.5 rounded ${colors.bg} ${colors.text}`}>
+                                    {CATEGORY_LABELS[evt.category] || evt.category}
+                                  </span>
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsSearchOpen(true)}
+                  className="text-sm font-medium text-gray-700 border-gray-300 hover:bg-gray-50"
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  Поиск
+                </Button>
+              )}
+            </div>
+
             <Select value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
               <SelectTrigger className="w-[160px] text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 border-gray-300">
                 <SelectValue placeholder="Вид отображения" />

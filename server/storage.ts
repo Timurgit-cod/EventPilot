@@ -31,6 +31,8 @@ export interface IStorage {
   updateEvent(id: string, event: UpdateEvent): Promise<Event | undefined>;
   deleteEvent(id: string): Promise<boolean>;
   
+  searchEvents(query: string): Promise<Event[]>;
+  
   // Analytics operations
   logUserAction(userId: string, action: string, eventId?: string, metadata?: any): Promise<void>;
   getUserAnalytics(userId: string): Promise<UserAnalytic[]>;
@@ -173,6 +175,27 @@ export class MemStorage implements IStorage {
     return this.events.delete(id);
   }
 
+  async searchEvents(query: string): Promise<Event[]> {
+    const lower = query.toLowerCase();
+    const allEvents = Array.from(this.events.values());
+    const titleMatches: Event[] = [];
+    const descMatches: Event[] = [];
+    for (const e of allEvents) {
+      if (e.title.toLowerCase().includes(lower)) {
+        titleMatches.push(e);
+      } else if (
+        (e.description && e.description.toLowerCase().includes(lower)) ||
+        (e.triggerContext && e.triggerContext.toLowerCase().includes(lower)) ||
+        (e.content && e.content.toLowerCase().includes(lower)) ||
+        (e.expectedResult && e.expectedResult.toLowerCase().includes(lower)) ||
+        (e.relevantClients && e.relevantClients.toLowerCase().includes(lower))
+      ) {
+        descMatches.push(e);
+      }
+    }
+    return [...titleMatches, ...descMatches];
+  }
+
   // Analytics operations
   async logUserAction(userId: string, action: string, eventId?: string, metadata?: any): Promise<void> {
     const analytic: UserAnalytic = {
@@ -299,6 +322,31 @@ export class DatabaseStorage implements IStorage {
       console.error('Error deleting event:', error);
       throw error;
     }
+  }
+
+  async searchEvents(query: string): Promise<Event[]> {
+    const pattern = `%${query}%`;
+    const allResults = await db.select().from(events).where(
+      or(
+        sql`LOWER(${events.title}) LIKE LOWER(${pattern})`,
+        sql`LOWER(${events.description}) LIKE LOWER(${pattern})`,
+        sql`LOWER(${events.triggerContext}) LIKE LOWER(${pattern})`,
+        sql`LOWER(${events.content}) LIKE LOWER(${pattern})`,
+        sql`LOWER(${events.expectedResult}) LIKE LOWER(${pattern})`,
+        sql`LOWER(${events.relevantClients}) LIKE LOWER(${pattern})`
+      )
+    );
+    const titleMatches: Event[] = [];
+    const otherMatches: Event[] = [];
+    const lower = query.toLowerCase();
+    for (const e of allResults) {
+      if (e.title.toLowerCase().includes(lower)) {
+        titleMatches.push(e);
+      } else {
+        otherMatches.push(e);
+      }
+    }
+    return [...titleMatches, ...otherMatches];
   }
 
   // Analytics operations

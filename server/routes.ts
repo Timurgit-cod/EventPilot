@@ -119,6 +119,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  app.get("/api/events/search", async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      if (!query || query.trim().length === 0) {
+        return res.json([]);
+      }
+      const results = await storage.searchEvents(query.trim());
+      res.json(results);
+    } catch (error) {
+      console.error("Error searching events:", error);
+      res.status(500).json({ message: "Failed to search events" });
+    }
+  });
+
   // Event routes - all authenticated users can view events
   app.get("/api/events", async (req, res) => {
     try {
