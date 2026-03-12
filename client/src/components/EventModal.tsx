@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,6 +32,32 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
+  const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+
+  useEffect(() => {
+    if (isOpen) setDragPos({ x: 0, y: 0 });
+  }, [isOpen]);
+
+  const onDragStart = useCallback((e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    e.preventDefault();
+    dragRef.current = { startX: e.clientX, startY: e.clientY, origX: dragPos.x, origY: dragPos.y };
+    const onMove = (ev: MouseEvent) => {
+      if (!dragRef.current) return;
+      setDragPos({
+        x: dragRef.current.origX + ev.clientX - dragRef.current.startX,
+        y: dragRef.current.origY + ev.clientY - dragRef.current.startY,
+      });
+    };
+    const onUp = () => {
+      dragRef.current = null;
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }, [dragPos]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(insertEventSchema),
@@ -260,8 +286,10 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
   if (!isAdmin) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between p-6 border-b">
+        <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+          style={{ transform: `translate(${dragPos.x}px, ${dragPos.y}px)` }}>
+          <div className="flex items-center justify-between p-6 border-b cursor-move select-none"
+            onMouseDown={onDragStart}>
             <h2 className="text-xl font-semibold text-gray-900" data-testid="title-event-details">
               Детали события
             </h2>
@@ -418,8 +446,10 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
   // Admin edit/create form
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b">
+      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        style={{ transform: `translate(${dragPos.x}px, ${dragPos.y}px)` }}>
+        <div className="flex items-center justify-between p-6 border-b cursor-move select-none"
+          onMouseDown={onDragStart}>
           <h2 className="text-xl font-semibold text-gray-900" data-testid="title-event-modal">
             {event ? "Редактировать событие" : templateEvent ? "Создать на основе события" : "Создать событие"}
           </h2>
