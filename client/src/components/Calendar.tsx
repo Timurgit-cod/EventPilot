@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Plus, FileEdit, Trash2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import EventModal from "./EventModal";
 import { EventFilters, type FilterOptions } from "./EventFilters";
 import { EventViewModal } from "./EventViewModal";
@@ -34,9 +35,19 @@ interface CalendarProps {
   isAdmin?: boolean;
 }
 
+type ViewMode = 'month' | 'week' | 'day';
+
 export default function Calendar({ isAdmin = false }: CalendarProps) {
   const today = new Date();
+  const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [currentDate, setCurrentDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => {
+    const d = new Date(today);
+    const dayOfWeek = (d.getDay() + 6) % 7;
+    d.setDate(d.getDate() - dayOfWeek);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  });
+  const [currentDay, setCurrentDay] = useState<Date>(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
@@ -220,6 +231,82 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
     setCurrentDate(new Date(today.getFullYear(), today.getMonth(), 1));
   };
 
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    setCurrentWeekStart(prev => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() + (direction === 'next' ? 7 : -7));
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    });
+  };
+
+  const navigateDay = (direction: 'prev' | 'next') => {
+    setCurrentDay(prev => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() + (direction === 'next' ? 1 : -1));
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    });
+  };
+
+  const getWeekDays = (weekStart: Date) => {
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(weekStart);
+      d.setDate(d.getDate() + i);
+      return d;
+    });
+  };
+
+  const getEventsForDateRange = (start: Date, end: Date) => {
+    return events.filter(event => {
+      const eventStart = new Date(event.startDate);
+      const eventEnd = new Date(event.endDate);
+      const isVisible = eventStart <= end && eventEnd >= start;
+
+      const categoryFilter = filters.categories[event.category as keyof FilterOptions['categories']];
+      const eventIndustries = Array.isArray(event.industry) ? event.industry : [event.industry || 'межотраслевое'];
+      const industryFilter = eventIndustries.some(
+        (ind: string) => filters.industries[ind as keyof FilterOptions['industries']]
+      );
+      let countryFilter = true;
+      if (event.category === 'foreign') {
+        countryFilter = event.country ?
+          filters.countries[event.country as keyof FilterOptions['countries']] : true;
+      }
+      const macroregionFilter = event.macroregion ?
+        filters.macroregions[event.macroregion as keyof FilterOptions['macroregions']] :
+        filters.macroregions['межрегиональный'];
+
+      return isVisible && categoryFilter && industryFilter && countryFilter && macroregionFilter;
+    });
+  };
+
+  const MONTHS_GENITIVE = [
+    'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+    'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+  ];
+
+  const DAYS_OF_WEEK_FULL = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
+
+  const getNavigationTitle = () => {
+    if (viewMode === 'month') {
+      return `${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+    }
+    if (viewMode === 'week') {
+      const weekEnd = new Date(currentWeekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      const startStr = `${currentWeekStart.getDate()} ${MONTHS_GENITIVE[currentWeekStart.getMonth()]}`;
+      const endStr = `${weekEnd.getDate()} ${MONTHS_GENITIVE[weekEnd.getMonth()]} ${weekEnd.getFullYear()}`;
+      return `${startStr} — ${endStr}`;
+    }
+    const dayOfWeekIdx = (currentDay.getDay() + 6) % 7;
+    return `${DAYS_OF_WEEK_FULL[dayOfWeekIdx]}, ${currentDay.getDate()} ${MONTHS_GENITIVE[currentDay.getMonth()]} ${currentDay.getFullYear()}`;
+  };
+
+  const handleNavigate = (direction: 'prev' | 'next') => {
+    if (viewMode === 'month') navigateMonth(direction);
+    else if (viewMode === 'week') navigateWeek(direction);
+    else navigateDay(direction);
+  };
+
   const handleAddEvent = (date?: string) => {
     if (!isAdmin) return;
     setSelectedDate(date || null);
@@ -307,35 +394,37 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigateMonth('prev')}
+              onClick={() => handleNavigate('prev')}
               className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-              data-testid="button-prev-month"
+              data-testid="button-prev"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <h2 className="text-2xl font-semibold text-gray-900" data-testid="text-current-month">
-              {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
+            <h2 className="text-2xl font-semibold text-gray-900 min-w-[200px] text-center" data-testid="text-current-period">
+              {getNavigationTitle()}
             </h2>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigateMonth('next')}
+              onClick={() => handleNavigate('next')}
               className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-              data-testid="button-next-month"
+              data-testid="button-next"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
           
           <div className="flex items-center space-x-3">
-            <Button
-              variant="outline"
-              onClick={goToToday}
-              className="text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200"
-              data-testid="button-today"
-            >
-              Сегодня
-            </Button>
+            <Select value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
+              <SelectTrigger className="w-[160px] text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 border-gray-300">
+                <SelectValue placeholder="Вид отображения" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="month">Месяц</SelectItem>
+                <SelectItem value="week">Неделя</SelectItem>
+                <SelectItem value="day">День</SelectItem>
+              </SelectContent>
+            </Select>
             
             <EventFilters 
               filters={filters} 
@@ -430,7 +519,162 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
 
         {/* Calendar Grid */}
         <div className="p-6 flex-1 flex flex-col">
-          {/* Week Days Header */}
+
+          {/* Week View */}
+          {viewMode === 'week' && (() => {
+            const weekDays = getWeekDays(currentWeekStart);
+            const weekEnd = new Date(currentWeekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+            const weekEvents = getEventsForDateRange(currentWeekStart, weekEnd);
+
+            return (
+              <div className="flex-1 flex flex-col">
+                <div className="flex gap-1 mb-1">
+                  {DAYS_OF_WEEK.map((day, index) => (
+                    <div key={day} className={`p-3 text-center text-sm font-semibold text-gray-600 bg-gray-50 ${index >= 5 ? 'flex-[0.33]' : 'flex-1'}`}>
+                      {day}
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-1 flex-1">
+                  {weekDays.map((day, index) => {
+                    const dateStr = formatDate(day);
+                    const isCurrentDay = isToday(day);
+                    const dayEvents = weekEvents.filter(event => {
+                      const start = event.startDate;
+                      const end = event.endDate;
+                      return dateStr >= start && dateStr <= end;
+                    });
+
+                    return (
+                      <div
+                        key={dateStr}
+                        className={`bg-white border border-gray-200 rounded p-3 flex flex-col min-h-[400px] ${
+                          index >= 5 ? 'flex-[0.33]' : 'flex-1'
+                        } ${isCurrentDay ? 'bg-blue-50 border-2 border-blue-200' : ''} ${
+                          isAdmin ? 'cursor-pointer hover:bg-gray-50' : ''
+                        }`}
+                        onClick={() => {
+                          if (!isAdmin) return;
+                          setSelectedDate(dateStr);
+                          handleAddEvent(dateStr);
+                        }}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className={`text-lg font-semibold ${isCurrentDay ? 'text-blue-700' : 'text-gray-900'}`}>
+                            {day.getDate()}
+                          </span>
+                          {isCurrentDay && (
+                            <span className="text-xs text-blue-600 font-medium">Сегодня</span>
+                          )}
+                        </div>
+                        <div className="space-y-1 flex-1">
+                          {dayEvents.map(event => {
+                            const colors = EVENT_COLORS[event.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.internal;
+                            return (
+                              <div
+                                key={event.id}
+                                className={`${colors.bg} rounded px-2 py-1 cursor-pointer`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (isAdmin) handleEditEvent(event);
+                                  else handleViewEvent(event);
+                                }}
+                              >
+                                <span className="text-xs font-semibold text-black truncate block">{event.title}</span>
+                                {event.time && event.category === 'internal' && (
+                                  <span className="text-xs text-gray-600">{event.time}</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Day View */}
+          {viewMode === 'day' && (() => {
+            const dateStr = formatDate(currentDay);
+            const isCurrentDay = isToday(currentDay);
+            const dayEvents = getEventsForDateRange(currentDay, currentDay);
+            const filteredDayEvents = dayEvents.filter(event => {
+              return dateStr >= event.startDate && dateStr <= event.endDate;
+            });
+
+            return (
+              <div className="flex-1 flex flex-col">
+                <div className={`bg-white border border-gray-200 rounded p-6 flex-1 min-h-[400px] ${
+                  isCurrentDay ? 'bg-blue-50 border-2 border-blue-200' : ''
+                }`}>
+                  {isCurrentDay && (
+                    <div className="mb-4">
+                      <span className="text-sm text-blue-600 font-medium bg-blue-100 px-2 py-1 rounded">Сегодня</span>
+                    </div>
+                  )}
+                  {filteredDayEvents.length === 0 ? (
+                    <div className="flex items-center justify-center h-full text-gray-400 text-lg">
+                      Нет событий на этот день
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {filteredDayEvents.map(event => {
+                        const colors = EVENT_COLORS[event.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.internal;
+                        const categoryLabels: Record<string, string> = {
+                          internal: 'Корпоративные (внутри банка)',
+                          external: 'Российские',
+                          foreign: 'Международные',
+                        };
+                        return (
+                          <div
+                            key={event.id}
+                            className={`${colors.bg} rounded-lg p-4 cursor-pointer hover:opacity-90 transition-opacity`}
+                            onClick={() => {
+                              if (isAdmin) handleEditEvent(event);
+                              else handleViewEvent(event);
+                            }}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h3 className="text-lg font-semibold text-black">{event.title}</h3>
+                                <div className="flex items-center gap-3 mt-1 text-sm text-gray-700">
+                                  <span>{categoryLabels[event.category] || event.category}</span>
+                                  {event.time && event.category === 'internal' && (
+                                    <span className="flex items-center gap-1">
+                                      <Clock className="w-3 h-3" /> {event.time}
+                                    </span>
+                                  )}
+                                  <span>{event.startDate}{event.startDate !== event.endDate ? ` — ${event.endDate}` : ''}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {isAdmin && (
+                    <div className="mt-4">
+                      <Button
+                        onClick={() => handleAddEvent(dateStr)}
+                        className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Добавить событие
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Month View */}
+          {viewMode === 'month' && <>
           <div className="flex gap-1 mb-1">
             {DAYS_OF_WEEK.map((day, index) => (
               <div 
@@ -444,7 +688,6 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
             ))}
           </div>
 
-          {/* Calendar Days Grid */}
           <div className="relative bg-gray-200 flex-1">
             <div className="flex flex-col gap-1 h-full" id="calendar-grid">
               {Array.from({ length: 6 }, (_, weekIndex) => (
@@ -700,6 +943,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
               });
             })()}
           </div>
+          </>}
         </div>
       </div>
 
