@@ -104,33 +104,42 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
     },
   });
 
-  // Загружаем события для всех видимых месяцев на календаре
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth() + 1;
-  const prevMonth = month === 1 ? 12 : month - 1;
-  const nextMonth = month === 12 ? 1 : month + 1;
-  const prevYear = month === 1 ? year - 1 : year;
-  const nextYear = month === 12 ? year + 1 : year;
+  const visibleMonths = useMemo(() => {
+    const months = new Set<string>();
+    if (viewMode === 'month') {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth() + 1;
+      const prevM = month === 1 ? 12 : month - 1;
+      const nextM = month === 12 ? 1 : month + 1;
+      const prevY = month === 1 ? year - 1 : year;
+      const nextY = month === 12 ? year + 1 : year;
+      months.add(`${year}-${month}`);
+      months.add(`${prevY}-${prevM}`);
+      months.add(`${nextY}-${nextM}`);
+    } else if (viewMode === 'week') {
+      const weekEnd = new Date(currentWeekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      months.add(`${currentWeekStart.getFullYear()}-${currentWeekStart.getMonth() + 1}`);
+      months.add(`${weekEnd.getFullYear()}-${weekEnd.getMonth() + 1}`);
+    } else {
+      months.add(`${currentDay.getFullYear()}-${currentDay.getMonth() + 1}`);
+    }
+    return Array.from(months).map(m => {
+      const [y, mo] = m.split('-').map(Number);
+      return { year: y, month: mo };
+    });
+  }, [viewMode, currentDate, currentWeekStart, currentDay]);
 
-  const { data: currentMonthEvents = [] } = useQuery<Event[]>({
-    queryKey: ['/api/events', year, month],
-  });
+  const q0 = useQuery<Event[]>({ queryKey: ['/api/events', visibleMonths[0]?.year, visibleMonths[0]?.month], enabled: !!visibleMonths[0] });
+  const q1 = useQuery<Event[]>({ queryKey: ['/api/events', visibleMonths[1]?.year, visibleMonths[1]?.month], enabled: !!visibleMonths[1] });
+  const q2 = useQuery<Event[]>({ queryKey: ['/api/events', visibleMonths[2]?.year, visibleMonths[2]?.month], enabled: !!visibleMonths[2] });
 
-  const { data: prevMonthEvents = [] } = useQuery<Event[]>({
-    queryKey: ['/api/events', prevYear, prevMonth], 
-  });
-
-  const { data: nextMonthEvents = [] } = useQuery<Event[]>({
-    queryKey: ['/api/events', nextYear, nextMonth],
-  });
-
-  // Объединяем все события и удаляем дубликаты по ID с мемоизацией
   const events = useMemo(() => {
-    const allEvents = [...currentMonthEvents, ...prevMonthEvents, ...nextMonthEvents];
+    const allEvents = [...(q0.data || []), ...(q1.data || []), ...(q2.data || [])];
     return Array.from(
       new Map(allEvents.map(event => [event.id, event])).values()
     );
-  }, [currentMonthEvents, prevMonthEvents, nextMonthEvents]);
+  }, [q0.data, q1.data, q2.data]);
 
 
 
@@ -256,10 +265,10 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
   };
 
   const getEventsForDateRange = (start: Date, end: Date) => {
+    const startStr = formatDate(start);
+    const endStr = formatDate(end);
     return events.filter(event => {
-      const eventStart = new Date(event.startDate);
-      const eventEnd = new Date(event.endDate);
-      const isVisible = eventStart <= end && eventEnd >= start;
+      const isVisible = event.startDate <= endStr && event.endDate >= startStr;
 
       const categoryFilter = filters.categories[event.category as keyof FilterOptions['categories']];
       const eventIndustries = Array.isArray(event.industry) ? event.industry : [event.industry || 'межотраслевое'];
