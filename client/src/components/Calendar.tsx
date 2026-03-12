@@ -630,7 +630,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   
                   let pxAdjust = 0;
                   if (colIndex === 1) pxAdjust = -2;
-                  if (colIndex === 2) pxAdjust = -2;
+                  if (colIndex === 2) pxAdjust = -6;
                   if (colIndex === 3) pxAdjust = -12;
                   if (colIndex === 4) pxAdjust = -14;
                   if (colIndex === 3 && spanCount >= 2) pxAdjust = -6;
