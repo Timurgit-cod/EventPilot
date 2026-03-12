@@ -40,6 +40,10 @@ export const events = pgTable("events", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
+  triggerContext: text("trigger_context"),
+  content: text("content"),
+  expectedResult: text("expected_result"),
+  relevantClients: text("relevant_clients"),
   startDate: varchar("start_date").notNull(), // YYYY-MM-DD format
   endDate: varchar("end_date").notNull(), // YYYY-MM-DD format
   category: varchar("category").notNull(),
@@ -70,6 +74,10 @@ const baseEventSchema = createInsertSchema(events).omit({
 }).extend({
   category: z.enum(['internal', 'external', 'foreign']),
   time: z.string().optional().or(z.literal('')),
+  triggerContext: z.string().optional().or(z.literal('')),
+  content: z.string().optional().or(z.literal('')),
+  expectedResult: z.string().optional().or(z.literal('')),
+  relevantClients: z.string().optional().or(z.literal('')),
   industry: z.array(z.enum(['межотраслевое', 'фарма', 'агро', 'IT', 'промышленность', 'ретейл'])).min(1, 'Выберите хотя бы одну отрасль'),
   country: z.enum(['США', 'Великобритания', 'Евросоюз', 'Германия', 'Япония', 'Индия', 'Бразилия', 'Китай']).optional(),
   macroregion: z.enum(['межрегиональный', 'Moscow', 'West', 'SibUral', 'Centre'])

@@ -64,6 +64,10 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
     defaultValues: {
       title: "",
       description: "",
+      triggerContext: "",
+      content: "",
+      expectedResult: "",
+      relevantClients: "",
       startDate: selectedDate || new Date().toISOString().split('T')[0],
       endDate: selectedDate || new Date().toISOString().split('T')[0],
       category: "internal",
@@ -77,11 +81,15 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
   const emptyDefaults = {
     title: "",
     description: "",
+    triggerContext: "",
+    content: "",
+    expectedResult: "",
+    relevantClients: "",
     startDate: selectedDate || new Date().toISOString().split('T')[0],
     endDate: selectedDate || new Date().toISOString().split('T')[0],
     category: "internal" as const,
     time: "",
-    industry: ["межотраслевое"] as string[],
+    industry: ["межотраслевое"] as ('межотраслевое' | 'фарма' | 'агро' | 'IT' | 'промышленность' | 'ретейл')[],
     country: undefined,
     macroregion: "межрегиональный" as const,
   };
@@ -93,24 +101,31 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
       form.reset({
         title: event.title,
         description: event.description || "",
+        triggerContext: event.triggerContext || "",
+        content: event.content || "",
+        expectedResult: event.expectedResult || "",
+        relevantClients: event.relevantClients || "",
         startDate: event.startDate,
         endDate: event.endDate,
         category: (event.category === 'internal' || event.category === 'external' || event.category === 'foreign') ? event.category : "internal",
         time: event.time || "",
-        industry: Array.isArray(event.industry) ? event.industry : [event.industry || 'межотраслевое'],
+        industry: (Array.isArray(event.industry) ? event.industry : [event.industry || 'межотраслевое']) as typeof emptyDefaults.industry,
         country: (event.country && ['США', 'Великобритания', 'Евросоюз', 'Германия', 'Япония', 'Индия', 'Бразилия', 'Китай'].includes(event.country)) ? event.country as 'США' | 'Великобритания' | 'Евросоюз' | 'Германия' | 'Япония' | 'Индия' | 'Бразилия' | 'Китай' : undefined,
         macroregion: (event.macroregion && ['межрегиональный', 'Moscow', 'West', 'SibUral', 'Centre'].includes(event.macroregion)) ? event.macroregion as 'межрегиональный' | 'Moscow' | 'West' | 'SibUral' | 'Centre' : "межрегиональный",
       });
     } else if (templateEvent) {
-      // Режим «создать на основе» — копируем данные, но без дат
       form.reset({
         title: templateEvent.title,
         description: templateEvent.description || "",
+        triggerContext: templateEvent.triggerContext || "",
+        content: templateEvent.content || "",
+        expectedResult: templateEvent.expectedResult || "",
+        relevantClients: templateEvent.relevantClients || "",
         startDate: selectedDate || new Date().toISOString().split('T')[0],
         endDate: selectedDate || new Date().toISOString().split('T')[0],
         category: (templateEvent.category === 'internal' || templateEvent.category === 'external' || templateEvent.category === 'foreign') ? templateEvent.category : "internal",
         time: templateEvent.time || "",
-        industry: Array.isArray(templateEvent.industry) ? templateEvent.industry : [templateEvent.industry || 'межотраслевое'],
+        industry: (Array.isArray(templateEvent.industry) ? templateEvent.industry : [templateEvent.industry || 'межотраслевое']) as typeof emptyDefaults.industry,
         country: (templateEvent.country && ['США', 'Великобритания', 'Евросоюз', 'Германия', 'Япония', 'Индия', 'Бразилия', 'Китай'].includes(templateEvent.country)) ? templateEvent.country as 'США' | 'Великобритания' | 'Евросоюз' | 'Германия' | 'Япония' | 'Индия' | 'Бразилия' | 'Китай' : undefined,
         macroregion: (templateEvent.macroregion && ['межрегиональный', 'Moscow', 'West', 'SibUral', 'Centre'].includes(templateEvent.macroregion)) ? templateEvent.macroregion as 'межрегиональный' | 'Moscow' | 'West' | 'SibUral' | 'Centre' : "межрегиональный",
       });
@@ -313,17 +328,44 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                 </p>
               </div>
 
-              {event.description && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Описание
-                  </label>
-                  <div 
-                    className="text-gray-900 [&_a]:text-blue-600 [&_a]:underline [&_strong]:font-semibold" 
-                    data-testid="text-event-description"
-                    dangerouslySetInnerHTML={{ __html: event.description }}
-                  />
-                </div>
+              {event.category === 'internal' ? (
+                <>
+                  {event.triggerContext && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Триггер / Контекст</label>
+                      <div className="text-gray-900 [&_a]:text-blue-600 [&_a]:underline [&_strong]:font-semibold" dangerouslySetInnerHTML={{ __html: event.triggerContext }} />
+                    </div>
+                  )}
+                  {event.content && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Содержание</label>
+                      <div className="text-gray-900 [&_a]:text-blue-600 [&_a]:underline [&_strong]:font-semibold" dangerouslySetInnerHTML={{ __html: event.content }} />
+                    </div>
+                  )}
+                  {event.expectedResult && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Ожидаемый результат</label>
+                      <div className="text-gray-900 [&_a]:text-blue-600 [&_a]:underline [&_strong]:font-semibold" dangerouslySetInnerHTML={{ __html: event.expectedResult }} />
+                    </div>
+                  )}
+                  {event.relevantClients && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Каким клиентам релевантно</label>
+                      <div className="text-gray-900 [&_a]:text-blue-600 [&_a]:underline [&_strong]:font-semibold" dangerouslySetInnerHTML={{ __html: event.relevantClients }} />
+                    </div>
+                  )}
+                </>
+              ) : (
+                event.description && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Описание</label>
+                    <div 
+                      className="text-gray-900 [&_a]:text-blue-600 [&_a]:underline [&_strong]:font-semibold" 
+                      data-testid="text-event-description"
+                      dangerouslySetInnerHTML={{ __html: event.description }}
+                    />
+                  </div>
+                )
               )}
 
               <div className="grid grid-cols-2 gap-4">
@@ -498,27 +540,116 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Описание
-                  </FormLabel>
-                  <FormControl>
-                    <RichTextEditor
-                      value={field.value || ''}
-                      onChange={field.onChange}
-                      placeholder="Введите описание события. Используйте кнопки для форматирования текста или горячие клавиши: Ctrl+B (жирный), Ctrl+K (ссылка)"
-                      data-testid="input-description"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {form.watch('category') === 'internal' ? (
+              <>
+                <FormField
+                  control={form.control}
+                  name="triggerContext"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        <FileText className="w-4 h-4 mr-2" />
+                        Триггер / Контекст
+                      </FormLabel>
+                      <FormControl>
+                        <RichTextEditor
+                          value={field.value || ''}
+                          onChange={field.onChange}
+                          placeholder="Опишите триггер или контекст события"
+                          data-testid="input-trigger-context"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="content"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        <FileText className="w-4 h-4 mr-2" />
+                        Содержание
+                      </FormLabel>
+                      <FormControl>
+                        <RichTextEditor
+                          value={field.value || ''}
+                          onChange={field.onChange}
+                          placeholder="Опишите содержание события"
+                          data-testid="input-content"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="expectedResult"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        <FileText className="w-4 h-4 mr-2" />
+                        Ожидаемый результат
+                      </FormLabel>
+                      <FormControl>
+                        <RichTextEditor
+                          value={field.value || ''}
+                          onChange={field.onChange}
+                          placeholder="Опишите ожидаемый результат"
+                          data-testid="input-expected-result"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="relevantClients"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        <FileText className="w-4 h-4 mr-2" />
+                        Каким клиентам релевантно
+                      </FormLabel>
+                      <FormControl>
+                        <RichTextEditor
+                          value={field.value || ''}
+                          onChange={field.onChange}
+                          placeholder="Укажите, каким клиентам это релевантно"
+                          data-testid="input-relevant-clients"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            ) : (
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      <FileText className="w-4 h-4 mr-2" />
+                      Описание
+                    </FormLabel>
+                    <FormControl>
+                      <RichTextEditor
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                        placeholder="Введите описание события"
+                        data-testid="input-description"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
@@ -776,7 +907,7 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
               />
             )}
 
-            <div className="flex justify-between pt-4 border-t">
+            <div className="flex justify-between items-center pt-4 border-t gap-3">
               <div>
                 {event && (
                   <Button

@@ -118,35 +118,79 @@ export function EventViewModal({ event, isOpen, onClose }: EventViewModalProps) 
         </DialogHeader>
         
         <div className="mt-6 space-y-6">
-          {/* Description */}
-          {event.description && (
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                <span>Описание</span>
-              </h3>
-              <div className="bg-gray-50 rounded-lg p-4 border">
-                <div 
-                  id="event-description" 
-                  className="text-gray-700 leading-relaxed [&_a]:text-blue-600 [&_a]:underline [&_strong]:font-semibold [&_p]:mb-2 [&_p:last-child]:mb-0"
-                  dangerouslySetInnerHTML={{ __html: event.description }}
-                />
-              </div>
-            </div>
+          {event.category === 'internal' ? (
+            <>
+              {event.triggerContext && (
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-gray-900">Триггер / Контекст</h3>
+                  <div className="bg-gray-50 rounded-lg p-4 border">
+                    <div className="text-gray-700 leading-relaxed [&_a]:text-blue-600 [&_a]:underline [&_strong]:font-semibold [&_p]:mb-2 [&_p:last-child]:mb-0"
+                      dangerouslySetInnerHTML={{ __html: event.triggerContext }} />
+                  </div>
+                </div>
+              )}
+              {event.content && (
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-gray-900">Содержание</h3>
+                  <div className="bg-gray-50 rounded-lg p-4 border">
+                    <div className="text-gray-700 leading-relaxed [&_a]:text-blue-600 [&_a]:underline [&_strong]:font-semibold [&_p]:mb-2 [&_p:last-child]:mb-0"
+                      dangerouslySetInnerHTML={{ __html: event.content }} />
+                  </div>
+                </div>
+              )}
+              {event.expectedResult && (
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-gray-900">Ожидаемый результат</h3>
+                  <div className="bg-gray-50 rounded-lg p-4 border">
+                    <div className="text-gray-700 leading-relaxed [&_a]:text-blue-600 [&_a]:underline [&_strong]:font-semibold [&_p]:mb-2 [&_p:last-child]:mb-0"
+                      dangerouslySetInnerHTML={{ __html: event.expectedResult }} />
+                  </div>
+                </div>
+              )}
+              {event.relevantClients && (
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-gray-900">Каким клиентам релевантно</h3>
+                  <div className="bg-gray-50 rounded-lg p-4 border">
+                    <div className="text-gray-700 leading-relaxed [&_a]:text-blue-600 [&_a]:underline [&_strong]:font-semibold [&_p]:mb-2 [&_p:last-child]:mb-0"
+                      dangerouslySetInnerHTML={{ __html: event.relevantClients }} />
+                  </div>
+                </div>
+              )}
+              {!event.triggerContext && !event.content && !event.expectedResult && !event.relevantClients && (
+                <div className="space-y-3">
+                  <div className="bg-gray-50 rounded-lg p-4 border">
+                    <p id="event-placeholder-description" className="text-gray-500 italic">
+                      Детали события не заполнены.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {event.description ? (
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-gray-900">Описание</h3>
+                  <div className="bg-gray-50 rounded-lg p-4 border">
+                    <div 
+                      id="event-description" 
+                      className="text-gray-700 leading-relaxed [&_a]:text-blue-600 [&_a]:underline [&_strong]:font-semibold [&_p]:mb-2 [&_p:last-child]:mb-0"
+                      dangerouslySetInnerHTML={{ __html: event.description }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-gray-900">Описание</h3>
+                  <div className="bg-gray-50 rounded-lg p-4 border">
+                    <p id="event-placeholder-description" className="text-gray-500 italic">
+                      Описание для этого события не указано.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </>
           )}
-          
-          {/* If no description, show a placeholder */}
-          {!event.description && (
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-gray-900">Описание</h3>
-              <div className="bg-gray-50 rounded-lg p-4 border">
-                <p id="event-placeholder-description" className="text-gray-500 italic">
-                  Описание для этого события не указано.
-                </p>
-              </div>
-            </div>
-          )}
-          
-
         </div>
         
         {/* Footer */}
