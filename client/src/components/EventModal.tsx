@@ -540,23 +540,70 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
               <FormField
                 control={form.control}
                 name="time"
-                render={({ field }) => (
+                render={({ field }) => {
+                  const timeValue = field.value || '';
+                  const parts = timeValue.split(':');
+                  const hours = parts[0] || '';
+                  const minutes = parts[1] || '';
+
+                  const handleHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                    let val = e.target.value.replace(/\D/g, '');
+                    if (val.length > 2) val = val.slice(0, 2);
+                    const num = parseInt(val, 10);
+                    if (val.length === 2 && (isNaN(num) || num > 23)) val = '23';
+                    const newTime = val ? `${val}:${minutes || '00'}` : '';
+                    field.onChange(newTime);
+                    if (val.length === 2) {
+                      const minInput = document.getElementById('time-minutes');
+                      if (minInput) minInput.focus();
+                    }
+                  };
+
+                  const handleMinutesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                    let val = e.target.value.replace(/\D/g, '');
+                    if (val.length > 2) val = val.slice(0, 2);
+                    const num = parseInt(val, 10);
+                    if (val.length === 2 && (isNaN(num) || num > 59)) val = '59';
+                    field.onChange(`${hours || '00'}:${val}`);
+                  };
+
+                  return (
                   <FormItem>
                     <FormLabel className="flex items-center">
                       <Clock className="w-4 h-4 mr-2" />
                       Время (необязательно)
                     </FormLabel>
                     <FormControl>
-                      <Input 
-                        type="time" 
-                        {...field} 
-                        value={field.value || ''}
-                        data-testid="input-time"
-                      />
+                      <div className="flex items-center gap-1">
+                        <Input
+                          id="time-hours"
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={2}
+                          placeholder="ЧЧ"
+                          value={hours}
+                          onChange={handleHoursChange}
+                          className="w-16 text-center"
+                          data-testid="input-time-hours"
+                        />
+                        <span className="text-lg font-bold text-gray-500">:</span>
+                        <Input
+                          id="time-minutes"
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={2}
+                          placeholder="ММ"
+                          value={minutes}
+                          onChange={handleMinutesChange}
+                          className="w-16 text-center"
+                          data-testid="input-time-minutes"
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                )}
+                  );
+                }}
               />
             )}
 
