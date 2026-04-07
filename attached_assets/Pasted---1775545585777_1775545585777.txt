@@ -1,0 +1,63 @@
+Уровень  │ Описание                                                          │
+├──────────┼───────────────────────────────────────────────────────────────────┤
+│ High     │ detect-non-literal-fs-filename                                    │
+│          │ rules.standart.gitlab.eslint.eslintdetect-non-literal-fs-filename │
+│          │                                                                   │
+│          │ The application dynamically constructs file or path information.  │
+│          │ If the path information comes from user-supplied input, it could  │
+│          │ be abused to read sensitive files, access other users' data, or   │
+│          │ aid in exploitation to gain further system access. User input     │
+│          │ should never be used in constructing paths or files for           │
+│          │ interacting with the filesystem. This includes filenames supplied │
+│          │ by user uploads or downloads. If possible, consider hashing user  │
+│          │ input or using unique values and use `path.normalize` to resolve  │
+│          │ and validate the path information prior to processing any file    │
+│          │ functionality. For more information on path traversal issues see  │
+│          │ OWASP: https://owasp.org/www-community/attacks/Path_Traversal     │
+│          │                                                                   │
+│          │ server/vite.ts:73 col 8:31                                        │
+│          │                                                                   │
+│          │ if (!fs.existsSync(distPath)) {                                   │
+├──────────┼───────────────────────────────────────────────────────────────────┤
+│ High     │ nodejs-ssrf-user-controlled-url-in-http-client                    │
+│          │ rules.standart.gitlab.nodejs-scan.nodejs-scanjavascript-ssrf-rule │
+│          │ -node-ssrf                                                        │
+│          │                                                                   │
+│          │ This application allows user-controlled URLs to be passed         │
+│          │ directly to HTTP client libraries. This can result in Server-Side │
+│          │ Request Forgery (SSRF). SSRF refers to an attack where the        │
+│          │ attacker can abuse functionality on the server to force it to     │
+│          │ make requests to other internal systems within your               │
+│          │ infrastructure that are not directly exposed to the internet.     │
+│          │ This allows the attacker to access internal resources they do not │
+│          │ have direct access to. Some risks of SSRF are: - Access and       │
+│          │ manipulation of internal databases, APIs, or administrative       │
+│          │ panels - Ability to scan internal network architecture and        │
+│          │ services - Can be used to pivot attacks into the internal network │
+│          │ - Circumvent network segregation and firewall rules To avoid      │
+│          │ this, try using hardcoded HTTP request calls or a whitelisting    │
+│          │ object to check whether the user input is trying to access        │
+│          │ allowed resources or not. Here is an example: ``` var whitelist = │
+│          │ [ 'https://example.com', 'https://example.com/sample' ]           │
+│          │ app.get('/ssrf/node-ssrf/axios/safe/3', function (req, res) {     │
+│          │ if(whitelist.includes(req.query.url)){ axios.get(url, {})         │
+│          │ .then(function (response) { console.log(response); })             │
+│          │ .catch(function (response) { console.log(response); }) } }); ```  │
+│          │ For more information on SSRF see OWASP:                           │
+│          │ https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Reques │
+│          │ t_Forgery_Prevention_Cheat_Sheet.html                             │
+│          │                                                                   │
+│          │ client/src/lib/queryClient.ts:34 ln 34, col 21 .. ln 43, col 5    │
+│          │                                                                   │
+│          │ const res = await fetch(url, {                                    │
+│          │   method,                                                         │
+│          │   headers: {                                                      │
+│          │     ...({"Authorization": `Bearer ${token}`}),                    │
+│          │     ...(isFormData ? {} : data ? { "Content-Type":                │
+│          │ "application/json" } : {}),                                       │
+│          │     ...options?.headers,                                          │
+│          │   },                                                              │
+│          │   body: isFormData ? data : data ? JSON.stringify(data) :         │
+│          │ undefined,                                                        │
+│          │   credentials: "include",                                         │
+│          │ });                                             

@@ -7,12 +7,22 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+const API_PREFIX = "/api/";
+
+function validateApiUrl(url: string): string {
+  if (!url.startsWith(API_PREFIX)) {
+    throw new Error(`Invalid API URL: only relative ${API_PREFIX} paths are allowed`);
+  }
+  return url;
+}
+
 export async function apiRequest(
   url: string,
   method: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  const safeUrl = validateApiUrl(url);
+  const res = await fetch(safeUrl, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
@@ -29,7 +39,9 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
+    const rawUrl = queryKey.join("/") as string;
+    const safeUrl = validateApiUrl(rawUrl);
+    const res = await fetch(safeUrl, {
       credentials: "include",
     });
 
