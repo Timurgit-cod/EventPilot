@@ -877,22 +877,27 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
               setViewMode('month');
             };
 
-            // December at top, January at bottom
-            const monthsTopDown = Array.from({ length: 12 }, (_, i) => 11 - i);
+            // January at top, December at bottom; grouped by category
+            const groups: { label: string; monthIdxs: number[] }[] = [
+              { label: 'Стратегические встречи', monthIdxs: [0, 1] },
+              { label: 'Активные продажи', monthIdxs: [2, 3] },
+              { label: 'Поддерживающие продажи', monthIdxs: [4] },
+              { label: 'Аналитика и развитие навыков', monthIdxs: [5, 6, 7] },
+              { label: 'Инвестиционные встречи', monthIdxs: [8, 9, 10] },
+              { label: 'Стратегические встречи', monthIdxs: [11] },
+            ];
 
-            return (
-              <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
-                {monthsTopDown.map(monthIdx => {
-                  const count = longEventsByMonth(monthIdx);
-                  const color = colorForCount(count);
-                  const note = noteByMonth.get(monthIdx + 1) || '';
-                  const isEditing = editingNoteMonth === monthIdx;
-                  return (
-                    <div
-                      key={monthIdx}
-                      className={`flex items-stretch border-2 ${color.border} ${color.bg} rounded-lg overflow-hidden`}
-                      data-testid={`year-month-${monthIdx + 1}`}
-                    >
+            const renderMonthRow = (monthIdx: number) => {
+              const count = longEventsByMonth(monthIdx);
+              const color = colorForCount(count);
+              const note = noteByMonth.get(monthIdx + 1) || '';
+              const isEditing = editingNoteMonth === monthIdx;
+              return (
+                <div
+                  key={monthIdx}
+                  className={`flex items-stretch border-2 ${color.border} ${color.bg} rounded-lg overflow-hidden`}
+                  data-testid={`year-month-${monthIdx + 1}`}
+                >
                       <button
                         type="button"
                         onClick={() => goToMonth(monthIdx)}
@@ -958,8 +963,27 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                         )}
                       </div>
                     </div>
-                  );
-                })}
+              );
+            };
+
+            return (
+              <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
+                {groups.map((group, gi) => (
+                  <div key={gi} className="flex items-stretch gap-2">
+                    <div className="w-12 shrink-0 bg-gray-100 border-2 border-gray-300 rounded-lg flex items-center justify-center py-3">
+                      <div
+                        className="text-sm font-semibold text-gray-700 whitespace-nowrap"
+                        style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+                        data-testid={`year-group-label-${gi}`}
+                      >
+                        {group.label}
+                      </div>
+                    </div>
+                    <div className="flex-1 flex flex-col gap-2">
+                      {group.monthIdxs.map(renderMonthRow)}
+                    </div>
+                  </div>
+                ))}
               </div>
             );
           })()}
