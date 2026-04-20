@@ -2,6 +2,7 @@ import {
   users,
   events,
   userAnalytics,
+  monthlyNotes,
   type User,
   type InsertUser,
   type Event,
@@ -9,9 +10,10 @@ import {
   type UpdateEvent,
   type UserAnalytic,
   type InsertUserAnalytic,
+  type MonthlyNote,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, like, asc, or, sql } from "drizzle-orm";
+import { eq, and, like, asc, or, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 // Interface for storage operations
@@ -33,6 +35,10 @@ export interface IStorage {
   
   searchEvents(query: string): Promise<Event[]>;
   
+  // Monthly notes
+  getMonthlyNotesByYear(year: number): Promise<MonthlyNote[]>;
+  upsertMonthlyNote(year: number, month: number, note: string, userId: string): Promise<MonthlyNote>;
+  
   // Analytics operations
   logUserAction(userId: string, action: string, eventId?: string, metadata?: any): Promise<void>;
   getUserAnalytics(userId: string): Promise<UserAnalytic[]>;
@@ -43,11 +49,13 @@ export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private events: Map<string, Event>;
   private analytics: Map<string, UserAnalytic>;
+  private monthlyNotes: Map<string, MonthlyNote>;
 
   constructor() {
     this.users = new Map();
     this.events = new Map();
     this.analytics = new Map();
+    this.monthlyNotes = new Map();
   }
 
   // User operations
@@ -197,6 +205,30 @@ export class MemStorage implements IStorage {
   }
 
   // Analytics operations
+  async getMonthlyNotesByYear(year: number): Promise<MonthlyNote[]> {
+    return Array.from(this.monthlyNotes.values()).filter(n => n.year === year);
+  }
+
+  async upsertMonthlyNote(year: number, month: number, note: string, userId: string): Promise<MonthlyNote> {
+    const key = `${year}-${month}`;
+    const existing = Array.from(this.monthlyNotes.values()).find(n => n.year === year && n.month === month);
+    if (existing) {
+      const updated: MonthlyNote = { ...existing, note, updatedBy: userId, updatedAt: new Date() };
+      this.monthlyNotes.set(existing.id, updated);
+      return updated;
+    }
+    const created: MonthlyNote = {
+      id: randomUUID(),
+      year,
+      month,
+      note,
+      updatedBy: userId,
+      updatedAt: new Date(),
+    };
+    this.monthlyNotes.set(created.id, created);
+    return created;
+  }
+
   async logUserAction(userId: string, action: string, eventId?: string, metadata?: any): Promise<void> {
     const analytic: UserAnalytic = {
       id: randomUUID(),
@@ -350,6 +382,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Analytics operations
+  async getMonthlyNotesByYear(year: number): Promise<MonthlyNote[]> {
+    return await db.select().from(monthlyNotes).where(eq(monthlyNotes.year, year));
+  }
+
+  async upsertMonthlyNote(year: number, month: number, note: string, userId: string): Promise<MonthlyNote> {
+    const [existing] = await db.select().from(monthlyNotes)
+      .where(and(eq(monthlyNotes.year, year), eq(monthlyNotes.month, month)));
+    if (existing) {
+      const [updated] = await db.update(monthlyNotes)
+        .set({ note, updatedBy: userId, updatedAt: new Date() })
+        .where(eq(monthlyNotes.id, existing.id))
+        .returning();
+      return updated;
+    }
+    const [created] = await db.insert(monthlyNotes)
+      .values({ year, month, note, updatedBy: userId })
+      .returning();
+    return created;
+  }
+
   async logUserAction(userId: string, action: string, eventId?: string, metadata?: any): Promise<void> {
     await db.insert(userAnalytics).values({
       userId,

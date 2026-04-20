@@ -133,6 +133,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Monthly notes routes
+  app.get("/api/monthly-notes/:year", async (req, res) => {
+    try {
+      const year = parseInt(req.params.year, 10);
+      if (!Number.isInteger(year) || year < 1900 || year > 3000) {
+        return res.status(400).json({ message: "Invalid year" });
+      }
+      const notes = await storage.getMonthlyNotesByYear(year);
+      res.json(notes);
+    } catch (error) {
+      console.error("Error fetching monthly notes:", error);
+      res.status(500).json({ message: "Failed to fetch monthly notes" });
+    }
+  });
+
+  app.put("/api/monthly-notes/:year/:month", isAdmin, async (req: any, res) => {
+    try {
+      const year = parseInt(req.params.year, 10);
+      const month = parseInt(req.params.month, 10);
+      if (!Number.isInteger(year) || year < 1900 || year > 3000 ||
+          !Number.isInteger(month) || month < 1 || month > 12) {
+        return res.status(400).json({ message: "Invalid year/month" });
+      }
+      const note = typeof req.body?.note === 'string' ? req.body.note.slice(0, 2000) : '';
+      const userId = req.session.user.id;
+      const saved = await storage.upsertMonthlyNote(year, month, note, userId);
+      res.json(saved);
+    } catch (error) {
+      console.error("Error saving monthly note:", error);
+      res.status(500).json({ message: "Failed to save monthly note" });
+    }
+  });
+
   // Event routes - all authenticated users can view events
   app.get("/api/events", async (req, res) => {
     try {

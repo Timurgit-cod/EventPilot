@@ -1,13 +1,15 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
-import { ChevronLeft, ChevronRight, Plus, FileEdit, Trash2, Clock, Search, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { ChevronLeft, ChevronRight, Plus, FileEdit, Trash2, Clock, Search, X, Pencil, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import EventModal from "./EventModal";
 import { EventFilters, type FilterOptions } from "./EventFilters";
 import { EventViewModal } from "./EventViewModal";
-import type { Event, InsertEvent } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { Event, InsertEvent, MonthlyNote } from "@shared/schema";
 
 type DraftFormData = Omit<InsertEvent, 'userId'>;
 
@@ -36,7 +38,7 @@ interface CalendarProps {
   isAdmin?: boolean;
 }
 
-type ViewMode = 'month' | 'week' | 'day';
+type ViewMode = 'month' | 'week' | 'day' | 'year';
 
 export default function Calendar({ isAdmin = false }: CalendarProps) {
   const today = new Date();
@@ -49,6 +51,9 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
   });
   const [currentDay, setCurrentDay] = useState<Date>(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
+  const [currentYear, setCurrentYear] = useState<number>(today.getFullYear());
+  const [editingNoteMonth, setEditingNoteMonth] = useState<number | null>(null);
+  const [editingNoteText, setEditingNoteText] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
@@ -189,6 +194,27 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
   const q1 = useQuery<Event[]>({ queryKey: ['/api/events', visibleMonths[1]?.year, visibleMonths[1]?.month], enabled: !!visibleMonths[1] });
   const q2 = useQuery<Event[]>({ queryKey: ['/api/events', visibleMonths[2]?.year, visibleMonths[2]?.month], enabled: !!visibleMonths[2] });
 
+  // Year view: load all events for the current year and monthly notes
+  const yearEventsQuery = useQuery<Event[]>({
+    queryKey: ['/api/events'],
+    enabled: viewMode === 'year',
+  });
+
+  const monthlyNotesQuery = useQuery<MonthlyNote[]>({
+    queryKey: ['/api/monthly-notes', currentYear],
+    enabled: viewMode === 'year',
+  });
+
+  const saveMonthlyNoteMutation = useMutation({
+    mutationFn: async ({ year, month, note }: { year: number; month: number; note: string }) => {
+      const res = await apiRequest(`/api/monthly-notes/${year}/${month}`, 'PUT', { note });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/monthly-notes', currentYear] });
+    },
+  });
+
   const events = useMemo(() => {
     const allEvents = [...(q0.data || []), ...(q1.data || []), ...(q2.data || [])];
     return Array.from(
@@ -311,6 +337,10 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
     });
   };
 
+  const navigateYear = (direction: 'prev' | 'next') => {
+    setCurrentYear(prev => prev + (direction === 'next' ? 1 : -1));
+  };
+
   const getWeekDays = (weekStart: Date) => {
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(weekStart);
@@ -361,6 +391,9 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
       const endStr = `${weekEnd.getDate()} ${MONTHS_GENITIVE[weekEnd.getMonth()]} ${weekEnd.getFullYear()}`;
       return `${startStr} — ${endStr}`;
     }
+    if (viewMode === 'year') {
+      return `${currentYear} год`;
+    }
     const dayOfWeekIdx = (currentDay.getDay() + 6) % 7;
     return `${DAYS_OF_WEEK_FULL[dayOfWeekIdx]}, ${currentDay.getDate()} ${MONTHS_GENITIVE[currentDay.getMonth()]} ${currentDay.getFullYear()}`;
   };
@@ -368,6 +401,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
   const handleNavigate = (direction: 'prev' | 'next') => {
     if (viewMode === 'month') navigateMonth(direction);
     else if (viewMode === 'week') navigateWeek(direction);
+    else if (viewMode === 'year') navigateYear(direction);
     else navigateDay(direction);
   };
 
@@ -554,6 +588,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 <SelectItem value="month">Месяц</SelectItem>
                 <SelectItem value="week">Неделя</SelectItem>
                 <SelectItem value="day">День</SelectItem>
+                <SelectItem value="year">Год</SelectItem>
               </SelectContent>
             </Select>
             
@@ -789,6 +824,142 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                     </div>
                   )}
                 </div>
+              </div>
+            );
+          })()}
+
+          {/* Year View */}
+          {viewMode === 'year' && (() => {
+            const yearEvents = yearEventsQuery.data || [];
+            const notes = monthlyNotesQuery.data || [];
+            const noteByMonth = new Map<number, string>();
+            notes.forEach(n => noteByMonth.set(n.month, n.note));
+
+            const longEventsByMonth = (monthIdx: number) => {
+              // monthIdx: 0..11
+              const monthStart = `${currentYear}-${String(monthIdx + 1).padStart(2, '0')}-01`;
+              const lastDay = new Date(currentYear, monthIdx + 1, 0).getDate();
+              const monthEnd = `${currentYear}-${String(monthIdx + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+              return yearEvents.filter(ev => {
+                if (ev.endDate < monthStart || ev.startDate > monthEnd) return false;
+                const start = new Date(ev.startDate);
+                const end = new Date(ev.endDate);
+                const days = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                return days >= 5;
+              }).length;
+            };
+
+            const colorForCount = (count: number) => {
+              if (count === 0) return { bg: 'bg-emerald-100', border: 'border-emerald-400', dot: 'bg-emerald-500', label: 'text-emerald-900' };
+              if (count <= 2) return { bg: 'bg-amber-100', border: 'border-amber-400', dot: 'bg-amber-500', label: 'text-amber-900' };
+              return { bg: 'bg-rose-100', border: 'border-rose-400', dot: 'bg-rose-500', label: 'text-rose-900' };
+            };
+
+            const startEditNote = (monthIdx: number) => {
+              setEditingNoteMonth(monthIdx);
+              setEditingNoteText(noteByMonth.get(monthIdx + 1) || '');
+            };
+
+            const saveNote = (monthIdx: number) => {
+              saveMonthlyNoteMutation.mutate(
+                { year: currentYear, month: monthIdx + 1, note: editingNoteText },
+                { onSuccess: () => { setEditingNoteMonth(null); setEditingNoteText(''); } }
+              );
+            };
+
+            const cancelEdit = () => {
+              setEditingNoteMonth(null);
+              setEditingNoteText('');
+            };
+
+            const goToMonth = (monthIdx: number) => {
+              setCurrentDate(new Date(currentYear, monthIdx, 1));
+              setViewMode('month');
+            };
+
+            // December at top, January at bottom
+            const monthsTopDown = Array.from({ length: 12 }, (_, i) => 11 - i);
+
+            return (
+              <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
+                {monthsTopDown.map(monthIdx => {
+                  const count = longEventsByMonth(monthIdx);
+                  const color = colorForCount(count);
+                  const note = noteByMonth.get(monthIdx + 1) || '';
+                  const isEditing = editingNoteMonth === monthIdx;
+                  return (
+                    <div
+                      key={monthIdx}
+                      className={`flex items-stretch border-2 ${color.border} ${color.bg} rounded-lg overflow-hidden`}
+                      data-testid={`year-month-${monthIdx + 1}`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => goToMonth(monthIdx)}
+                        className={`px-5 py-4 text-left flex flex-col justify-center min-w-[180px] hover:bg-black/5 transition`}
+                        title="Открыть месяц"
+                      >
+                        <div className={`text-lg font-bold ${color.label}`}>{MONTHS[monthIdx]}</div>
+                        <div className={`text-xs ${color.label} opacity-80 flex items-center gap-1.5 mt-1`}>
+                          <span className={`inline-block w-2 h-2 rounded-full ${color.dot}`} />
+                          событий 5+ дней: <span className="font-semibold">{count}</span>
+                        </div>
+                      </button>
+                      <div className="flex-1 px-4 py-3 flex items-center">
+                        {isEditing ? (
+                          <div className="w-full flex items-start gap-2">
+                            <Textarea
+                              value={editingNoteText}
+                              onChange={(e) => setEditingNoteText(e.target.value)}
+                              maxLength={2000}
+                              placeholder="Краткое описание месяца..."
+                              className="flex-1 min-h-[60px] bg-white"
+                              data-testid={`year-note-input-${monthIdx + 1}`}
+                            />
+                            <div className="flex flex-col gap-1">
+                              <Button
+                                size="sm"
+                                onClick={() => saveNote(monthIdx)}
+                                disabled={saveMonthlyNoteMutation.isPending}
+                                className="h-8 bg-blue-600 hover:bg-blue-700 text-white"
+                                data-testid={`year-note-save-${monthIdx + 1}`}
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={cancelEdit}
+                                className="h-8"
+                                data-testid={`year-note-cancel-${monthIdx + 1}`}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-full flex items-start gap-2">
+                            <div className={`flex-1 text-sm ${note ? 'text-gray-800' : 'text-gray-400 italic'} whitespace-pre-wrap`}>
+                              {note || (isAdmin ? 'Нажмите карандаш, чтобы добавить описание' : 'Нет описания')}
+                            </div>
+                            {isAdmin && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => startEditNote(monthIdx)}
+                                className="h-8 w-8 p-0 text-gray-500 hover:text-gray-800"
+                                title="Редактировать описание"
+                                data-testid={`year-note-edit-${monthIdx + 1}`}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             );
           })()}

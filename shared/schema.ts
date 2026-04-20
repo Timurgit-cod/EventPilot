@@ -2,9 +2,11 @@ import { sql } from 'drizzle-orm';
 import {
   boolean,
   index,
+  integer,
   jsonb,
   pgTable,
   timestamp,
+  uniqueIndex,
   varchar,
   text,
 } from "drizzle-orm/pg-core";
@@ -55,6 +57,27 @@ export const events = pgTable("events", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Monthly notes table - shared per (year, month)
+export const monthlyNotes = pgTable("monthly_notes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  year: integer("year").notNull(),
+  month: integer("month").notNull(),
+  note: text("note").notNull().default(''),
+  updatedBy: varchar("updated_by").references(() => users.id),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [uniqueIndex("monthly_notes_year_month_idx").on(table.year, table.month)]);
+
+export const insertMonthlyNoteSchema = createInsertSchema(monthlyNotes).omit({
+  id: true,
+  updatedBy: true,
+  updatedAt: true,
+}).extend({
+  note: z.string().max(2000),
+});
+
+export type MonthlyNote = typeof monthlyNotes.$inferSelect;
+export type InsertMonthlyNote = z.infer<typeof insertMonthlyNoteSchema>;
 
 // User analytics table to track clicks and interactions
 export const userAnalytics = pgTable("user_analytics", {
