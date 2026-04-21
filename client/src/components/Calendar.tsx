@@ -835,18 +835,19 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
             const noteByMonth = new Map<number, string>();
             notes.forEach(n => noteByMonth.set(n.month, n.note));
 
-            const longEventsByMonth = (monthIdx: number) => {
-              // monthIdx: 0..11
+            const longEventsByMonth = (monthIdx: number): Event[] => {
+              // monthIdx: 0..11; only межрегиональные events lasting 5+ days
               const monthStart = `${currentYear}-${String(monthIdx + 1).padStart(2, '0')}-01`;
               const lastDay = new Date(currentYear, monthIdx + 1, 0).getDate();
               const monthEnd = `${currentYear}-${String(monthIdx + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
               return yearEvents.filter(ev => {
+                if (ev.macroregion !== 'межрегиональный') return false;
                 if (ev.endDate < monthStart || ev.startDate > monthEnd) return false;
                 const start = new Date(ev.startDate);
                 const end = new Date(ev.endDate);
                 const days = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
                 return days >= 5;
-              }).length;
+              });
             };
 
             const colorForCount = (count: number) => {
@@ -888,10 +889,16 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
             ];
 
             const renderMonthRow = (monthIdx: number) => {
-              const count = longEventsByMonth(monthIdx);
+              const longEvents = longEventsByMonth(monthIdx);
+              const count = longEvents.length;
               const color = colorForCount(count);
               const note = noteByMonth.get(monthIdx + 1) || '';
               const isEditing = editingNoteMonth === monthIdx;
+              const formatRange = (ev: Event) => {
+                const s = new Date(ev.startDate);
+                const e = new Date(ev.endDate);
+                return `${s.getDate()} ${MONTHS_GENITIVE[s.getMonth()]} – ${e.getDate()} ${MONTHS_GENITIVE[e.getMonth()]}`;
+              };
               return (
                 <div
                   key={monthIdx}
@@ -907,9 +914,31 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                         <div className={`text-lg font-bold ${color.label}`}>{MONTHS[monthIdx]}</div>
                         <div className={`text-xs ${color.label} opacity-80 flex items-center gap-1.5 mt-1`}>
                           <span className={`inline-block w-2 h-2 rounded-full ${color.dot}`} />
-                          событий 5+ дней: <span className="font-semibold">{count}</span>
+                          межрегиональных 5+ дней: <span className="font-semibold">{count}</span>
                         </div>
                       </button>
+                      <div className="px-3 py-3 min-w-[260px] max-w-[340px] border-l border-black/10 flex flex-col gap-1 justify-center bg-white/40">
+                        {longEvents.length === 0 ? (
+                          <div className="text-xs text-gray-500 italic">Нет межрегиональных событий 5+ дней</div>
+                        ) : (
+                          longEvents.map(ev => {
+                            const evColor = EVENT_COLORS[ev.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.internal;
+                            return (
+                              <button
+                                key={ev.id}
+                                type="button"
+                                onClick={() => (isAdmin ? handleEditEvent(ev) : handleViewEvent(ev))}
+                                className={`text-left ${evColor.bg} ${evColor.text} rounded px-2 py-1 text-xs hover:brightness-95 transition`}
+                                data-testid={`year-event-${ev.id}`}
+                                title={ev.title}
+                              >
+                                <div className="font-semibold truncate">{ev.title}</div>
+                                <div className="opacity-75">{formatRange(ev)}</div>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
                       <div className="flex-1 px-4 py-3 flex items-center">
                         {isEditing ? (
                           <div className="w-full flex items-start gap-2">
