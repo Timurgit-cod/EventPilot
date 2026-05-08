@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, Calendar, Clock, FileText, Tag, Trash2, Copy, Minus, HelpCircle } from "lucide-react";
+import { X, Calendar, Clock, FileText, Tag, Trash2, Copy, Minus, HelpCircle, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
@@ -295,6 +295,14 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
     }
   };
 
+  const creatorQuery = useQuery<{ id: string; username: string | null }>({
+    queryKey: ['/api/users', event?.createdBy],
+    enabled: isOpen && !!event?.createdBy,
+  });
+  const creatorName = event?.createdBy
+    ? (creatorQuery.isLoading ? '...' : (creatorQuery.data?.username || 'неизвестно'))
+    : null;
+
   if (!isOpen) return null;
 
   // If user is not admin, show read-only view
@@ -327,6 +335,13 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
                   {event.title}
                 </p>
               </div>
+
+              {creatorName && (
+                <div className="flex items-center gap-2 text-sm text-gray-600" data-testid="event-creator">
+                  <UserIcon className="w-4 h-4" />
+                  <span>Создал: <span className="font-medium text-gray-800">{creatorName}</span></span>
+                </div>
+              )}
 
               {event.category === 'internal' ? (
                 <>
@@ -519,6 +534,12 @@ export default function EventModal({ isOpen, onClose, event, selectedDate, isAdm
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 space-y-4">
+            {creatorName && (
+              <div className="flex items-center gap-2 text-sm text-gray-600 -mb-2" data-testid="event-creator">
+                <UserIcon className="w-4 h-4" />
+                <span>Создал: <span className="font-medium text-gray-800">{creatorName}</span></span>
+              </div>
+            )}
             <FormField
               control={form.control}
               name="title"
