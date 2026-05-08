@@ -5,9 +5,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { X, Calendar, Clock, Tag } from 'lucide-react';
+import { X, Calendar, Clock, Tag, User as UserIcon } from 'lucide-react';
 import type { Event } from '@shared/schema';
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 interface EventViewModalProps {
   event: Event | null;
@@ -22,6 +23,11 @@ const EVENT_CATEGORIES = {
 };
 
 export function EventViewModal({ event, isOpen, onClose }: EventViewModalProps) {
+  const creatorQuery = useQuery<{ id: string; username: string | null }>({
+    queryKey: ['/api/users', event?.createdBy],
+    enabled: isOpen && !!event?.createdBy,
+  });
+
   if (!event) return null;
 
 
@@ -112,6 +118,19 @@ export function EventViewModal({ event, isOpen, onClose }: EventViewModalProps) 
               <Calendar className="h-4 w-4" />
               <span className="text-sm font-medium">
                 {formatDateRange()}
+              </span>
+            </div>
+
+            {/* Creator */}
+            <div className="flex items-center space-x-2 text-gray-600" data-testid="event-creator">
+              <UserIcon className="h-4 w-4" />
+              <span className="text-sm">
+                Создал:{' '}
+                <span className="font-medium text-gray-800">
+                  {creatorQuery.isLoading
+                    ? '...'
+                    : creatorQuery.data?.username || 'неизвестно'}
+                </span>
               </span>
             </div>
           </div>
