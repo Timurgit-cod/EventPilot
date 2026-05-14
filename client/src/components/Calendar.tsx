@@ -54,6 +54,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
   const [currentYear, setCurrentYear] = useState<number>(today.getFullYear());
   const [editingNoteMonth, setEditingNoteMonth] = useState<number | null>(null);
   const [editingNoteText, setEditingNoteText] = useState<string>('');
+  const [yearMacroregion, setYearMacroregion] = useState<string>('межрегиональный');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
@@ -206,8 +207,8 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
   });
 
   const saveMonthlyNoteMutation = useMutation({
-    mutationFn: async ({ year, month, note }: { year: number; month: number; note: string }) => {
-      const res = await apiRequest(`/api/monthly-notes/${year}/${month}`, 'PUT', { note });
+    mutationFn: async ({ year, month, macroregion, note }: { year: number; month: number; macroregion: string; note: string }) => {
+      const res = await apiRequest(`/api/monthly-notes/${year}/${month}`, 'PUT', { note, macroregion });
       return res.json();
     },
     onSuccess: () => {
@@ -833,15 +834,26 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
             const yearEvents = yearEventsQuery.data || [];
             const notes = monthlyNotesQuery.data || [];
             const noteByMonth = new Map<number, string>();
-            notes.forEach(n => noteByMonth.set(n.month, n.note));
+            notes
+              .filter(n => (n.macroregion || 'межрегиональный') === yearMacroregion)
+              .forEach(n => noteByMonth.set(n.month, n.note));
+
+            const macroregionOptions: { value: string; label: string }[] = [
+              { value: 'межрегиональный', label: 'Межрегиональный' },
+              { value: 'Moscow', label: 'Moscow' },
+              { value: 'West', label: 'West' },
+              { value: 'SibUral', label: 'SibUral' },
+              { value: 'Centre', label: 'Centre' },
+            ];
+            const macroregionLabel = macroregionOptions.find(o => o.value === yearMacroregion)?.label || yearMacroregion;
 
             const longEventsByMonth = (monthIdx: number): Event[] => {
-              // monthIdx: 0..11; only межрегиональные events lasting 5+ days
+              // monthIdx: 0..11; events of selected macroregion lasting 5+ days
               const monthStart = `${currentYear}-${String(monthIdx + 1).padStart(2, '0')}-01`;
               const lastDay = new Date(currentYear, monthIdx + 1, 0).getDate();
               const monthEnd = `${currentYear}-${String(monthIdx + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
               return yearEvents.filter(ev => {
-                if (ev.macroregion !== 'межрегиональный') return false;
+                if ((ev.macroregion || 'межрегиональный') !== yearMacroregion) return false;
                 if (ev.endDate < monthStart || ev.startDate > monthEnd) return false;
                 const start = new Date(ev.startDate);
                 const end = new Date(ev.endDate);
@@ -863,7 +875,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
 
             const saveNote = (monthIdx: number) => {
               saveMonthlyNoteMutation.mutate(
-                { year: currentYear, month: monthIdx + 1, note: editingNoteText },
+                { year: currentYear, month: monthIdx + 1, macroregion: yearMacroregion, note: editingNoteText },
                 { onSuccess: () => { setEditingNoteMonth(null); setEditingNoteText(''); } }
               );
             };
@@ -914,12 +926,12 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                         <div className={`text-lg font-bold ${color.label}`}>{MONTHS[monthIdx]}</div>
                         <div className={`text-xs ${color.label} opacity-80 flex items-center gap-1.5 mt-1`}>
                           <span className={`inline-block w-2 h-2 rounded-full ${color.dot}`} />
-                          межрегиональных 5+ дней: <span className="font-semibold">{count}</span>
+                          {macroregionLabel} 5+ дней: <span className="font-semibold">{count}</span>
                         </div>
                       </button>
                       <div className="px-3 py-3 min-w-[260px] max-w-[340px] border-l border-black/10 flex flex-col gap-1 justify-center bg-white/40">
                         {longEvents.length === 0 ? (
-                          <div className="text-xs text-gray-500 italic">Нет межрегиональных событий 5+ дней</div>
+                          <div className="text-xs text-gray-500 italic">Нет событий 5+ дней ({macroregionLabel})</div>
                         ) : (
                           longEvents.map(ev => {
                             const evColor = EVENT_COLORS[ev.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.internal;
@@ -997,6 +1009,19 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
 
             return (
               <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
+                <div className="flex items-center gap-3 px-1 pb-1">
+                  <label className="text-sm font-medium text-gray-700">Макрорегион:</label>
+                  <Select value={yearMacroregion} onValueChange={(v) => { setYearMacroregion(v); setEditingNoteMonth(null); }}>
+                    <SelectTrigger className="w-[220px] h-9" data-testid="select-year-macroregion">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {macroregionOptions.map(o => (
+                        <SelectItem key={o.value} value={o.value} data-testid={`option-year-macroregion-${o.value}`}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 {groups.map((group, gi) => (
                   <div key={gi} className="flex items-stretch gap-2">
                     <div className="w-12 shrink-0 bg-gray-100 border-2 border-gray-300 rounded-lg flex items-center justify-center py-3">

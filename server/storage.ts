@@ -37,7 +37,7 @@ export interface IStorage {
   
   // Monthly notes
   getMonthlyNotesByYear(year: number): Promise<MonthlyNote[]>;
-  upsertMonthlyNote(year: number, month: number, note: string, userId: string): Promise<MonthlyNote>;
+  upsertMonthlyNote(year: number, month: number, macroregion: string, note: string, userId: string): Promise<MonthlyNote>;
   
   // Analytics operations
   logUserAction(userId: string, action: string, eventId?: string, metadata?: any): Promise<void>;
@@ -209,9 +209,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.monthlyNotes.values()).filter(n => n.year === year);
   }
 
-  async upsertMonthlyNote(year: number, month: number, note: string, userId: string): Promise<MonthlyNote> {
-    const key = `${year}-${month}`;
-    const existing = Array.from(this.monthlyNotes.values()).find(n => n.year === year && n.month === month);
+  async upsertMonthlyNote(year: number, month: number, macroregion: string, note: string, userId: string): Promise<MonthlyNote> {
+    const existing = Array.from(this.monthlyNotes.values()).find(
+      n => n.year === year && n.month === month && n.macroregion === macroregion
+    );
     if (existing) {
       const updated: MonthlyNote = { ...existing, note, updatedBy: userId, updatedAt: new Date() };
       this.monthlyNotes.set(existing.id, updated);
@@ -221,6 +222,7 @@ export class MemStorage implements IStorage {
       id: randomUUID(),
       year,
       month,
+      macroregion,
       note,
       updatedBy: userId,
       updatedAt: new Date(),
@@ -386,9 +388,13 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(monthlyNotes).where(eq(monthlyNotes.year, year));
   }
 
-  async upsertMonthlyNote(year: number, month: number, note: string, userId: string): Promise<MonthlyNote> {
+  async upsertMonthlyNote(year: number, month: number, macroregion: string, note: string, userId: string): Promise<MonthlyNote> {
     const [existing] = await db.select().from(monthlyNotes)
-      .where(and(eq(monthlyNotes.year, year), eq(monthlyNotes.month, month)));
+      .where(and(
+        eq(monthlyNotes.year, year),
+        eq(monthlyNotes.month, month),
+        eq(monthlyNotes.macroregion, macroregion),
+      ));
     if (existing) {
       const [updated] = await db.update(monthlyNotes)
         .set({ note, updatedBy: userId, updatedAt: new Date() })
@@ -397,7 +403,7 @@ export class DatabaseStorage implements IStorage {
       return updated;
     }
     const [created] = await db.insert(monthlyNotes)
-      .values({ year, month, note, updatedBy: userId })
+      .values({ year, month, macroregion, note, updatedBy: userId })
       .returning();
     return created;
   }

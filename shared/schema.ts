@@ -58,15 +58,16 @@ export const events = pgTable("events", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Monthly notes table - shared per (year, month)
+// Monthly notes table - shared per (year, month, macroregion)
 export const monthlyNotes = pgTable("monthly_notes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   year: integer("year").notNull(),
   month: integer("month").notNull(),
+  macroregion: varchar("macroregion").notNull().default('межрегиональный'),
   note: text("note").notNull().default(''),
   updatedBy: varchar("updated_by").references(() => users.id),
   updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => [uniqueIndex("monthly_notes_year_month_idx").on(table.year, table.month)]);
+}, (table) => [uniqueIndex("monthly_notes_year_month_macroregion_idx").on(table.year, table.month, table.macroregion)]);
 
 export const insertMonthlyNoteSchema = createInsertSchema(monthlyNotes).omit({
   id: true,

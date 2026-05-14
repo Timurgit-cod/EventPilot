@@ -168,8 +168,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid year/month" });
       }
       const note = typeof req.body?.note === 'string' ? req.body.note.slice(0, 2000) : '';
+      const allowedMacroregions = ['межрегиональный', 'Moscow', 'West', 'SibUral', 'Centre'];
+      const macroregion = typeof req.body?.macroregion === 'string' && allowedMacroregions.includes(req.body.macroregion)
+        ? req.body.macroregion
+        : 'межрегиональный';
       const userId = req.session.user.id;
-      const saved = await storage.upsertMonthlyNote(year, month, note, userId);
+      const saved = await storage.upsertMonthlyNote(year, month, macroregion, note, userId);
       res.json(saved);
     } catch (error) {
       console.error("Error saving monthly note:", error);
