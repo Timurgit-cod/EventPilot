@@ -593,7 +593,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 <SelectItem value="month">Месяц</SelectItem>
                 <SelectItem value="week">Неделя</SelectItem>
                 <SelectItem value="day">День</SelectItem>
-                <SelectItem value="year">Год ({currentYear})</SelectItem>
+                <SelectItem value="year">Год (capacity)</SelectItem>
               </SelectContent>
             </Select>
             
