@@ -879,9 +879,6 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
               { value: 'emerald', label: 'Зелёный', bg: 'bg-emerald-100', border: 'border-emerald-400', label_color: 'text-emerald-900', solid: 'bg-emerald-400', swatch: 'bg-emerald-400' },
               { value: 'amber', label: 'Жёлтый', bg: 'bg-amber-100', border: 'border-amber-400', label_color: 'text-amber-900', solid: 'bg-amber-400', swatch: 'bg-amber-400' },
               { value: 'rose', label: 'Красный', bg: 'bg-rose-100', border: 'border-rose-400', label_color: 'text-rose-900', solid: 'bg-rose-400', swatch: 'bg-rose-400' },
-              { value: 'sky', label: 'Синий', bg: 'bg-sky-100', border: 'border-sky-400', label_color: 'text-sky-900', solid: 'bg-sky-400', swatch: 'bg-sky-400' },
-              { value: 'violet', label: 'Фиолетовый', bg: 'bg-violet-100', border: 'border-violet-400', label_color: 'text-violet-900', solid: 'bg-violet-400', swatch: 'bg-violet-400' },
-              { value: 'slate', label: 'Серый', bg: 'bg-slate-100', border: 'border-slate-400', label_color: 'text-slate-900', solid: 'bg-slate-400', swatch: 'bg-slate-400' },
             ];
 
             const paletteFor = (value: string) => COLOR_PALETTE.find(c => c.value === value) || COLOR_PALETTE[0];

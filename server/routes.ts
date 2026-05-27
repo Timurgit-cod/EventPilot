@@ -172,7 +172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const macroregion = typeof req.body?.macroregion === 'string' && allowedMacroregions.includes(req.body.macroregion)
         ? req.body.macroregion
         : 'межрегиональный';
-      const allowedColors = ['default', 'emerald', 'amber', 'rose', 'sky', 'violet', 'slate'];
+      const allowedColors = ['default', 'emerald', 'amber', 'rose'];
       const color = typeof req.body?.color === 'string' && allowedColors.includes(req.body.color)
         ? req.body.color
         : 'default';
