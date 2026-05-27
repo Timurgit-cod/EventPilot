@@ -593,7 +593,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 <SelectItem value="month">Месяц</SelectItem>
                 <SelectItem value="week">Неделя</SelectItem>
                 <SelectItem value="day">День</SelectItem>
-                <SelectItem value="year">Год</SelectItem>
+                <SelectItem value="year">Год ({currentYear})</SelectItem>
               </SelectContent>
             </Select>
             
@@ -1052,11 +1052,11 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                   key={monthIdx}
                   type="button"
                   onClick={() => setExpandedCompactMonth(isExpanded ? null : monthIdx)}
-                  className={`relative flex flex-col items-center justify-center aspect-square rounded-lg border-2 ${tileColor.border} ${tileColor.bg} hover:brightness-95 transition ${isExpanded ? 'ring-2 ring-blue-500' : ''}`}
+                  className={`relative flex flex-row items-center justify-center gap-2 h-12 rounded-lg border-2 ${tileColor.border} ${tileColor.bg} hover:brightness-95 transition ${isExpanded ? 'ring-2 ring-blue-500' : ''}`}
                   data-testid={`year-compact-${monthIdx + 1}`}
                 >
-                  <div className={`text-base font-bold ${tileColor.label}`}>{MONTHS[monthIdx]}</div>
-                  <div className={`text-xs ${tileColor.label} opacity-80 mt-1`}>{count} соб.</div>
+                  <div className={`text-sm font-bold ${tileColor.label}`}>{MONTHS[monthIdx]}</div>
+                  <div className={`text-xs ${tileColor.label} opacity-80`}>{count} соб.</div>
                 </button>
               );
             };
