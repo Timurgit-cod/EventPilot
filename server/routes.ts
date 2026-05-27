@@ -172,8 +172,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const macroregion = typeof req.body?.macroregion === 'string' && allowedMacroregions.includes(req.body.macroregion)
         ? req.body.macroregion
         : 'межрегиональный';
+      const allowedColors = ['default', 'emerald', 'amber', 'rose', 'sky', 'violet', 'slate'];
+      const color = typeof req.body?.color === 'string' && allowedColors.includes(req.body.color)
+        ? req.body.color
+        : 'default';
       const userId = req.session.user.id;
-      const saved = await storage.upsertMonthlyNote(year, month, macroregion, note, userId);
+      const saved = await storage.upsertMonthlyNote(year, month, macroregion, note, color, userId);
       res.json(saved);
     } catch (error) {
       console.error("Error saving monthly note:", error);

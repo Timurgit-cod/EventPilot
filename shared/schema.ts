@@ -65,6 +65,7 @@ export const monthlyNotes = pgTable("monthly_notes", {
   month: integer("month").notNull(),
   macroregion: varchar("macroregion").notNull().default('межрегиональный'),
   note: text("note").notNull().default(''),
+  color: varchar("color").notNull().default('default'),
   updatedBy: varchar("updated_by").references(() => users.id),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [uniqueIndex("monthly_notes_year_month_macroregion_idx").on(table.year, table.month, table.macroregion)]);

@@ -54,7 +54,11 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
   const [currentYear, setCurrentYear] = useState<number>(today.getFullYear());
   const [editingNoteMonth, setEditingNoteMonth] = useState<number | null>(null);
   const [editingNoteText, setEditingNoteText] = useState<string>('');
+  const [editingNoteColor, setEditingNoteColor] = useState<string>('default');
   const [yearMacroregion, setYearMacroregion] = useState<string>('межрегиональный');
+  const [yearLayout, setYearLayout] = useState<'advanced' | 'compact'>('advanced');
+  const [compactColorSource, setCompactColorSource] = useState<'product' | 'research'>('product');
+  const [expandedCompactMonth, setExpandedCompactMonth] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
@@ -207,8 +211,8 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
   });
 
   const saveMonthlyNoteMutation = useMutation({
-    mutationFn: async ({ year, month, macroregion, note }: { year: number; month: number; macroregion: string; note: string }) => {
-      const res = await apiRequest(`/api/monthly-notes/${year}/${month}`, 'PUT', { note, macroregion });
+    mutationFn: async ({ year, month, macroregion, note, color }: { year: number; month: number; macroregion: string; note: string; color: string }) => {
+      const res = await apiRequest(`/api/monthly-notes/${year}/${month}`, 'PUT', { note, macroregion, color });
       return res.json();
     },
     onSuccess: () => {
@@ -833,10 +837,12 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
           {viewMode === 'year' && (() => {
             const yearEvents = yearEventsQuery.data || [];
             const notes = monthlyNotesQuery.data || [];
-            const noteByMonth = new Map<number, string>();
+            const noteDataByMonth = new Map<number, { note: string; color: string }>();
             notes
               .filter(n => (n.macroregion || 'межрегиональный') === yearMacroregion)
-              .forEach(n => noteByMonth.set(n.month, n.note));
+              .forEach(n => noteDataByMonth.set(n.month, { note: n.note, color: (n as any).color || 'default' }));
+            const getNote = (monthIdx: number) => noteDataByMonth.get(monthIdx + 1)?.note || '';
+            const getNoteColor = (monthIdx: number) => noteDataByMonth.get(monthIdx + 1)?.color || 'default';
 
             const macroregionOptions: { value: string; label: string }[] = [
               { value: 'межрегиональный', label: 'Межрегиональный' },
@@ -848,7 +854,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
             const macroregionLabel = macroregionOptions.find(o => o.value === yearMacroregion)?.label || yearMacroregion;
 
             const longEventsByMonth = (monthIdx: number): Event[] => {
-              // monthIdx: 0..11; events of selected macroregion lasting 5+ days
+              // monthIdx: 0..11; events of selected macroregion lasting 2+ days
               const monthStart = `${currentYear}-${String(monthIdx + 1).padStart(2, '0')}-01`;
               const lastDay = new Date(currentYear, monthIdx + 1, 0).getDate();
               const monthEnd = `${currentYear}-${String(monthIdx + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
@@ -858,31 +864,45 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                 const start = new Date(ev.startDate);
                 const end = new Date(ev.endDate);
                 const days = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-                return days >= 5;
+                return days >= 2;
               });
             };
 
             const colorForCount = (count: number) => {
-              if (count === 0) return { bg: 'bg-emerald-100', border: 'border-emerald-400', dot: 'bg-emerald-500', label: 'text-emerald-900' };
-              if (count <= 2) return { bg: 'bg-amber-100', border: 'border-amber-400', dot: 'bg-amber-500', label: 'text-amber-900' };
-              return { bg: 'bg-rose-100', border: 'border-rose-400', dot: 'bg-rose-500', label: 'text-rose-900' };
+              if (count === 0) return { bg: 'bg-emerald-100', border: 'border-emerald-400', dot: 'bg-emerald-500', label: 'text-emerald-900', solid: 'bg-emerald-400' };
+              if (count <= 2) return { bg: 'bg-amber-100', border: 'border-amber-400', dot: 'bg-amber-500', label: 'text-amber-900', solid: 'bg-amber-400' };
+              return { bg: 'bg-rose-100', border: 'border-rose-400', dot: 'bg-rose-500', label: 'text-rose-900', solid: 'bg-rose-400' };
             };
+
+            const COLOR_PALETTE: { value: string; label: string; bg: string; border: string; label_color: string; solid: string; swatch: string }[] = [
+              { value: 'default', label: 'Нет', bg: 'bg-white', border: 'border-gray-300', label_color: 'text-gray-800', solid: 'bg-gray-200', swatch: 'bg-white border border-gray-300' },
+              { value: 'emerald', label: 'Зелёный', bg: 'bg-emerald-100', border: 'border-emerald-400', label_color: 'text-emerald-900', solid: 'bg-emerald-400', swatch: 'bg-emerald-400' },
+              { value: 'amber', label: 'Жёлтый', bg: 'bg-amber-100', border: 'border-amber-400', label_color: 'text-amber-900', solid: 'bg-amber-400', swatch: 'bg-amber-400' },
+              { value: 'rose', label: 'Красный', bg: 'bg-rose-100', border: 'border-rose-400', label_color: 'text-rose-900', solid: 'bg-rose-400', swatch: 'bg-rose-400' },
+              { value: 'sky', label: 'Синий', bg: 'bg-sky-100', border: 'border-sky-400', label_color: 'text-sky-900', solid: 'bg-sky-400', swatch: 'bg-sky-400' },
+              { value: 'violet', label: 'Фиолетовый', bg: 'bg-violet-100', border: 'border-violet-400', label_color: 'text-violet-900', solid: 'bg-violet-400', swatch: 'bg-violet-400' },
+              { value: 'slate', label: 'Серый', bg: 'bg-slate-100', border: 'border-slate-400', label_color: 'text-slate-900', solid: 'bg-slate-400', swatch: 'bg-slate-400' },
+            ];
+
+            const paletteFor = (value: string) => COLOR_PALETTE.find(c => c.value === value) || COLOR_PALETTE[0];
 
             const startEditNote = (monthIdx: number) => {
               setEditingNoteMonth(monthIdx);
-              setEditingNoteText(noteByMonth.get(monthIdx + 1) || '');
+              setEditingNoteText(getNote(monthIdx));
+              setEditingNoteColor(getNoteColor(monthIdx));
             };
 
             const saveNote = (monthIdx: number) => {
               saveMonthlyNoteMutation.mutate(
-                { year: currentYear, month: monthIdx + 1, macroregion: yearMacroregion, note: editingNoteText },
-                { onSuccess: () => { setEditingNoteMonth(null); setEditingNoteText(''); } }
+                { year: currentYear, month: monthIdx + 1, macroregion: yearMacroregion, note: editingNoteText, color: editingNoteColor },
+                { onSuccess: () => { setEditingNoteMonth(null); setEditingNoteText(''); setEditingNoteColor('default'); } }
               );
             };
 
             const cancelEdit = () => {
               setEditingNoteMonth(null);
               setEditingNoteText('');
+              setEditingNoteColor('default');
             };
 
             const goToMonth = (monthIdx: number) => {
@@ -903,9 +923,11 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
             const renderMonthRow = (monthIdx: number) => {
               const longEvents = longEventsByMonth(monthIdx);
               const count = longEvents.length;
-              const color = colorForCount(count);
-              const note = noteByMonth.get(monthIdx + 1) || '';
+              const leftColor = colorForCount(count);
+              const note = getNote(monthIdx);
+              const rightColor = paletteFor(getNoteColor(monthIdx));
               const isEditing = editingNoteMonth === monthIdx;
+              const editColor = paletteFor(editingNoteColor);
               const formatRange = (ev: Event) => {
                 const s = new Date(ev.startDate);
                 const e = new Date(ev.endDate);
@@ -914,24 +936,24 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
               return (
                 <div
                   key={monthIdx}
-                  className={`flex items-stretch border-2 ${color.border} ${color.bg} rounded-lg overflow-hidden`}
+                  className={`flex items-stretch border-2 ${leftColor.border} rounded-lg overflow-hidden`}
                   data-testid={`year-month-${monthIdx + 1}`}
                 >
                       <button
                         type="button"
                         onClick={() => goToMonth(monthIdx)}
-                        className={`px-5 py-4 text-left flex flex-col justify-center min-w-[180px] hover:bg-black/5 transition`}
+                        className={`px-5 py-4 text-left flex flex-col justify-center min-w-[180px] hover:bg-black/5 transition ${leftColor.bg}`}
                         title="Открыть месяц"
                       >
-                        <div className={`text-lg font-bold ${color.label}`}>{MONTHS[monthIdx]}</div>
-                        <div className={`text-xs ${color.label} opacity-80 flex items-center gap-1.5 mt-1`}>
-                          <span className={`inline-block w-2 h-2 rounded-full ${color.dot}`} />
-                          {macroregionLabel} 5+ дней: <span className="font-semibold">{count}</span>
+                        <div className={`text-lg font-bold ${leftColor.label}`}>{MONTHS[monthIdx]}</div>
+                        <div className={`text-xs ${leftColor.label} opacity-80 flex items-center gap-1.5 mt-1`}>
+                          <span className={`inline-block w-2 h-2 rounded-full ${leftColor.dot}`} />
+                          {macroregionLabel} 2+ дней: <span className="font-semibold">{count}</span>
                         </div>
                       </button>
-                      <div className="px-3 py-3 min-w-[260px] max-w-[340px] border-l border-black/10 flex flex-col gap-1 justify-center bg-white/40">
+                      <div className={`px-3 py-3 min-w-[260px] max-w-[340px] border-l border-black/10 flex flex-col gap-1 justify-center ${leftColor.bg} bg-opacity-50`}>
                         {longEvents.length === 0 ? (
-                          <div className="text-xs text-gray-500 italic">Нет событий 5+ дней ({macroregionLabel})</div>
+                          <div className="text-xs text-gray-500 italic">Нет событий 2+ дней ({macroregionLabel})</div>
                         ) : (
                           longEvents.map(ev => {
                             const evColor = EVENT_COLORS[ev.category as keyof typeof EVENT_COLORS] || EVENT_COLORS.internal;
@@ -951,41 +973,56 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                           })
                         )}
                       </div>
-                      <div className="flex-1 px-4 py-3 flex items-center">
+                      <div className={`flex-1 px-4 py-3 flex items-center border-l-2 ${rightColor.border} ${isEditing ? editColor.bg : rightColor.bg}`}>
                         {isEditing ? (
-                          <div className="w-full flex items-start gap-2">
-                            <Textarea
-                              value={editingNoteText}
-                              onChange={(e) => setEditingNoteText(e.target.value)}
-                              maxLength={2000}
-                              placeholder="Краткое описание месяца..."
-                              className="flex-1 min-h-[60px] bg-white"
-                              data-testid={`year-note-input-${monthIdx + 1}`}
-                            />
-                            <div className="flex flex-col gap-1">
-                              <Button
-                                size="sm"
-                                onClick={() => saveNote(monthIdx)}
-                                disabled={saveMonthlyNoteMutation.isPending}
-                                className="h-8 bg-blue-600 hover:bg-blue-700 text-white"
-                                data-testid={`year-note-save-${monthIdx + 1}`}
-                              >
-                                <Check className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={cancelEdit}
-                                className="h-8"
-                                data-testid={`year-note-cancel-${monthIdx + 1}`}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
+                          <div className="w-full flex flex-col gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-xs font-medium text-gray-700">Цвет:</span>
+                              {COLOR_PALETTE.map(c => (
+                                <button
+                                  key={c.value}
+                                  type="button"
+                                  onClick={() => setEditingNoteColor(c.value)}
+                                  className={`w-6 h-6 rounded-full ${c.swatch} ${editingNoteColor === c.value ? 'ring-2 ring-offset-1 ring-blue-600' : 'ring-1 ring-gray-300'}`}
+                                  title={c.label}
+                                  data-testid={`year-note-color-${monthIdx + 1}-${c.value}`}
+                                />
+                              ))}
+                            </div>
+                            <div className="w-full flex items-start gap-2">
+                              <Textarea
+                                value={editingNoteText}
+                                onChange={(e) => setEditingNoteText(e.target.value)}
+                                maxLength={2000}
+                                placeholder="Краткое описание месяца..."
+                                className="flex-1 min-h-[60px] bg-white"
+                                data-testid={`year-note-input-${monthIdx + 1}`}
+                              />
+                              <div className="flex flex-col gap-1">
+                                <Button
+                                  size="sm"
+                                  onClick={() => saveNote(monthIdx)}
+                                  disabled={saveMonthlyNoteMutation.isPending}
+                                  className="h-8 bg-blue-600 hover:bg-blue-700 text-white"
+                                  data-testid={`year-note-save-${monthIdx + 1}`}
+                                >
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={cancelEdit}
+                                  className="h-8"
+                                  data-testid={`year-note-cancel-${monthIdx + 1}`}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         ) : (
                           <div className="w-full flex items-start gap-2">
-                            <div className={`flex-1 text-sm ${note ? 'text-gray-800' : 'text-gray-400 italic'} whitespace-pre-wrap`}>
+                            <div className={`flex-1 text-sm ${note ? rightColor.label_color : 'text-gray-400 italic'} whitespace-pre-wrap`}>
                               {note || (isAdmin ? 'Нажмите карандаш, чтобы добавить описание' : 'Нет описания')}
                             </div>
                             {isAdmin && (
@@ -994,7 +1031,7 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                                 variant="ghost"
                                 onClick={() => startEditNote(monthIdx)}
                                 className="h-8 w-8 p-0 text-gray-500 hover:text-gray-800"
-                                title="Редактировать описание"
+                                title="Редактировать описание / цвет"
                                 data-testid={`year-note-edit-${monthIdx + 1}`}
                               >
                                 <Pencil className="h-4 w-4" />
@@ -1007,11 +1044,42 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
               );
             };
 
+            const renderCompactTile = (monthIdx: number) => {
+              const count = longEventsByMonth(monthIdx).length;
+              const tileColor = compactColorSource === 'product'
+                ? colorForCount(count)
+                : { bg: paletteFor(getNoteColor(monthIdx)).bg, border: paletteFor(getNoteColor(monthIdx)).border, label: paletteFor(getNoteColor(monthIdx)).label_color, dot: paletteFor(getNoteColor(monthIdx)).solid };
+              const isExpanded = expandedCompactMonth === monthIdx;
+              return (
+                <button
+                  key={monthIdx}
+                  type="button"
+                  onClick={() => setExpandedCompactMonth(isExpanded ? null : monthIdx)}
+                  className={`relative flex flex-col items-center justify-center aspect-square rounded-lg border-2 ${tileColor.border} ${tileColor.bg} hover:brightness-95 transition ${isExpanded ? 'ring-2 ring-blue-500' : ''}`}
+                  data-testid={`year-compact-${monthIdx + 1}`}
+                >
+                  <div className={`text-base font-bold ${tileColor.label}`}>{MONTHS[monthIdx]}</div>
+                  <div className={`text-xs ${tileColor.label} opacity-80 mt-1`}>{count} соб.</div>
+                </button>
+              );
+            };
+
+            const ToggleBtn = ({ active, onClick, children, testId }: { active: boolean; onClick: () => void; children: React.ReactNode; testId?: string }) => (
+              <button
+                type="button"
+                onClick={onClick}
+                className={`px-3 py-1.5 text-sm rounded-md transition ${active ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'}`}
+                data-testid={testId}
+              >
+                {children}
+              </button>
+            );
+
             return (
               <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
-                <div className="flex items-center gap-3 px-1 pb-1">
+                <div className="flex items-center gap-3 px-1 pb-1 flex-wrap">
                   <label className="text-sm font-medium text-gray-700">Макрорегион:</label>
-                  <Select value={yearMacroregion} onValueChange={(v) => { setYearMacroregion(v); setEditingNoteMonth(null); }}>
+                  <Select value={yearMacroregion} onValueChange={(v) => { setYearMacroregion(v); setEditingNoteMonth(null); setExpandedCompactMonth(null); }}>
                     <SelectTrigger className="w-[220px] h-9" data-testid="select-year-macroregion">
                       <SelectValue />
                     </SelectTrigger>
@@ -1021,8 +1089,27 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                       ))}
                     </SelectContent>
                   </Select>
+
+                  <div className="ml-2 flex items-center gap-2">
+                    <label className="text-sm font-medium text-gray-700">Вид:</label>
+                    <div className="flex items-center gap-1">
+                      <ToggleBtn active={yearLayout === 'advanced'} onClick={() => { setYearLayout('advanced'); setExpandedCompactMonth(null); }} testId="year-layout-advanced">Расширенное</ToggleBtn>
+                      <ToggleBtn active={yearLayout === 'compact'} onClick={() => { setYearLayout('compact'); setEditingNoteMonth(null); }} testId="year-layout-compact">Сжатое</ToggleBtn>
+                    </div>
+                  </div>
+
+                  {yearLayout === 'compact' && (
+                    <div className="ml-2 flex items-center gap-2">
+                      <label className="text-sm font-medium text-gray-700">Отображение:</label>
+                      <div className="flex items-center gap-1">
+                        <ToggleBtn active={compactColorSource === 'product'} onClick={() => setCompactColorSource('product')} testId="year-color-product">Продуктовое</ToggleBtn>
+                        <ToggleBtn active={compactColorSource === 'research'} onClick={() => setCompactColorSource('research')} testId="year-color-research">Исследовательское</ToggleBtn>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                {groups.map((group, gi) => (
+
+                {yearLayout === 'advanced' && groups.map((group, gi) => (
                   <div key={gi} className="flex items-stretch gap-2">
                     <div className="w-12 shrink-0 bg-gray-100 border-2 border-gray-300 rounded-lg flex items-center justify-center py-3">
                       <div
@@ -1038,6 +1125,19 @@ export default function Calendar({ isAdmin = false }: CalendarProps) {
                     </div>
                   </div>
                 ))}
+
+                {yearLayout === 'compact' && (
+                  <div className="flex flex-col gap-3">
+                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
+                      {Array.from({ length: 12 }, (_, i) => i).map(renderCompactTile)}
+                    </div>
+                    {expandedCompactMonth !== null && (
+                      <div className="border-t pt-3" data-testid="year-compact-expanded">
+                        {renderMonthRow(expandedCompactMonth)}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })()}
