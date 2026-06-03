@@ -10,7 +10,21 @@ async function throwIfResNotOk(res: Response) {
 const API_PREFIX = "/api/";
 
 function validateApiUrl(url: string): string {
-  if (!url.startsWith(API_PREFIX)) {
+  if (typeof url !== "string") {
+    throw new Error("Invalid API URL");
+  }
+  // Only allow same-origin, relative paths under the /api/ prefix.
+  // Reject anything that could redirect the request elsewhere:
+  // absolute/scheme URLs, protocol-relative (//host), backslashes,
+  // path traversal (..) and control characters.
+  if (
+    !url.startsWith(API_PREFIX) ||
+    url.startsWith("//") ||
+    url.includes("\\") ||
+    url.includes("..") ||
+    /[\x00-\x1f]/.test(url) ||
+    /^[a-z][a-z0-9+.-]*:/i.test(url)
+  ) {
     throw new Error(`Invalid API URL: only relative ${API_PREFIX} paths are allowed`);
   }
   return url;
