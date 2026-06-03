@@ -72,32 +72,43 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     ([, config]) => config.theme || config.color
   )
 
-  if (!colorConfig.length) {
-    return null
-  }
+  const sanitize = (value: string) => value.replace(/[<>{}]/g, "")
 
-  return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
+  const css = React.useMemo(() => {
+    if (!colorConfig.length) {
+      return ""
+    }
+    return Object.entries(THEMES)
+      .map(
+        ([theme, prefix]) => `
+${prefix} [data-chart=${sanitize(id)}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
     const color =
       itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
       itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
+    return color ? `  --color-${sanitize(key)}: ${sanitize(color)};` : null
   })
   .join("\n")}
 }
 `
-          )
-          .join("\n"),
-      }}
-    />
-  )
+      )
+      .join("\n")
+  }, [colorConfig, id])
+
+  const styleRef = React.useRef<HTMLStyleElement>(null)
+
+  React.useEffect(() => {
+    if (styleRef.current) {
+      styleRef.current.textContent = css
+    }
+  }, [css])
+
+  if (!colorConfig.length) {
+    return null
+  }
+
+  return <style ref={styleRef} />
 }
 
 const ChartTooltip = RechartsPrimitive.Tooltip
