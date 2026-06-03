@@ -1,0 +1,33 @@
+nodejs-ssrf-user-controlled-url-in-http-client                                        │
+│          │ rules.standart.gitlab.nodejs-scan.nodejs-scanjavascript-ssrf-rule-node-ssrf           │
+│          │                                                                                       │
+│          │ This application allows user-controlled URLs to be passed directly to HTTP client     │
+│          │ libraries. This can result in Server-Side Request Forgery (SSRF). SSRF refers to an   │
+│          │ attack where the attacker can abuse functionality on the server to force it to make   │
+│          │ requests to other internal systems within your infrastructure that are not directly   │
+│          │ exposed to the internet. This allows the attacker to access internal resources they   │
+│          │ do not have direct access to. Some risks of SSRF are: - Access and manipulation of    │
+│          │ internal databases, APIs, or administrative panels - Ability to scan internal network │
+│          │ architecture and services - Can be used to pivot attacks into the internal network -  │
+│          │ Circumvent network segregation and firewall rules To avoid this, try using hardcoded  │
+│          │ HTTP request calls or a whitelisting object to check whether the user input is trying │
+│          │ to access allowed resources or not. Here is an example: ``` var whitelist = [         │
+│          │ 'https://example.com', 'https://example.com/sample' ]                                 │
+│          │ app.get('/ssrf/node-ssrf/axios/safe/3', function (req, res) {                         │
+│          │ if(whitelist.includes(req.query.url)){ axios.get(url, {}) .then(function (response) { │
+│          │ console.log(response); }) .catch(function (response) { console.log(response); }) }    │
+│          │ }); ``` For more information on SSRF see OWASP:                                       │
+│          │ https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention │
+│          │ _Cheat_Sheet.html                                                                     │
+│          │                                                                                       │
+│          │ client/src/lib/queryClient.ts:58 ln 58, col 21 .. ln 67, col 5                        │
+│          │ const res = await fetch(safeUrl, {                                                    │
+│          │   method,                                                                             │
+│          │   headers: {                                                                          │
+│          │     ...({"Authorization": `Bearer ${token}`}),                                        │
+│          │     ...(isFormData ? {} : data ? { "Content-Type": "application/json" } : {}),        │
+│          │     ...options?.headers,                                                              │
+│          │   },                                                                                  │
+│          │   body: isFormData ? data : data ? JSON.stringify(data) : undefined,                  │
+│          │   credentials: "include",                                                             │
+│          │ });                           

@@ -30,17 +30,20 @@ function validateApiUrl(url: string): string {
   return url;
 }
 
+async function apiFetch(url: string, init?: RequestInit): Promise<Response> {
+  const safeUrl = validateApiUrl(url);
+  return fetch(safeUrl, { credentials: "include", ...init });
+}
+
 export async function apiRequest(
   url: string,
   method: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const safeUrl = validateApiUrl(url);
-  const res = await fetch(safeUrl, {
+  const res = await apiFetch(url, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
   });
 
   await throwIfResNotOk(res);
@@ -54,10 +57,7 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const rawUrl = queryKey.join("/") as string;
-    const safeUrl = validateApiUrl(rawUrl);
-    const res = await fetch(safeUrl, {
-      credentials: "include",
-    });
+    const res = await apiFetch(rawUrl);
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
